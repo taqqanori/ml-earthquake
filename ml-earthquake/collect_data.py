@@ -14,27 +14,47 @@ def collect_data(out_path, start_date='1945-01-01', end_date=None, min_mag=0, st
     if end_date is None:
         end_date = datetime.now(tz=timezone.utc)
     date = start_date
-    step_days = timedelta(days=step_days)
 
     if show_progress:
-        progress = tqdm(total=int((end_date - start_date) / step_days))
+        progress = tqdm(total=int((end_date - start_date) / timedelta(days=step_days)))
     
     df = None
+    subdivide = 1
     while date <= end_date:
-        url = url_base.format(\
-            date.strftime(f), \
-            (date + step_days).strftime(f), \
-            min_mag)
-        step_df = pd.read_csv(url)
-        if df is not None:
-            df = pd.concat([df, step_df])
+        step_df = None
+        for start_offset in range(0, step_days, step_days // subdivide):
+            end_offset = min(start_offset + (step_days // subdivide), step_days)
+            url = url_base.format(\
+                (date + timedelta(days=start_offset)).strftime(f), \
+                (date + timedelta(days=end_offset)).strftime(f), \
+                min_mag)
+            try:
+                step_df = _concat(step_df, pd.read_csv(url))
+            except Exception as e:
+                # failure
+                print(e)
+                subdivide += 1
+                print('retrying (dividing date range into {})...'.format(subdivide))
+                break
         else:
-            df = step_df
+            # success!
+            subdivide = 1
+            df = _concat(df, step_df)
 
-        date += step_days
-        if show_progress:
-            progress.update()
+            date += timedelta(days=step_days)
+            if show_progress:
+                progress.update()
     df.to_csv(out_path, index=None)
 
+def _concat(df1, df2):
+    if df1 is None:
+        return df2
+    return pd.concat([df1, df2])
+
 if __name__ == '__main__':
-    collect_data('../data/earthquakes.csv')
+    collect_data(
+        os.path.join(
+            os.path.dirname(__file__), 
+            '..', 
+            'data', 
+            'earthquakes.csv'))
