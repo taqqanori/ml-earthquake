@@ -61,12 +61,12 @@ def preprocess(
         X.append(x)
 
         # y
+        _y = 0
         for _, row in _range(df, date + window, date + window + predict_range).iterrows():
             d = _distance(row['latitude'], row['longitude'], predict_center_lat, predict_center_lng)
             if d <= predict_radius_meters and threshold_mag <= row['mag']:
-                y.append(1)
-            else:
-                y.append(0)
+                _y = 1
+        y.append(_y)
 
         date += (window + predict_range)
         if show_progress:
@@ -113,27 +113,3 @@ def _distance(lat1, lng1, lat2, lng2):
     avg_lat = (rad_lat1 - rad_lat2) / 2
     avg_lng = (rad_lng1 - rad_lng2) / 2
     return r * 2 * math.asin(math.sqrt(math.pow(math.sin(avg_lat), 2) + math.cos(rad_lat1) * math.cos(rad_lat2) * math.pow(math.sin(avg_lng), 2)))
-
-if __name__ == '__main__':
-    # print(_distance(35.6544, 139.74477, 21.4225, 39.8261))
-    X, y = preprocess(
-        os.path.join(
-            os.path.dirname(__file__), 
-            '..', 
-            'data', 
-            'earthquakes.csv'),
-        30,
-        7,
-        100,
-        100,
-        35.680934,
-        139.767551,
-        150 * 1000,
-        4.0,
-        cache_dir=os.path.join(
-            os.path.dirname(__file__), 
-            '..', 
-            'work')
-    )
-    print(X.shape)
-    print(y.shape)
