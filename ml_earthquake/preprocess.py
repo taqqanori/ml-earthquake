@@ -69,8 +69,11 @@ def preprocess(
         if not os.path.exists(cache_y_path) or not os.path.exists(cache_info_path):
             _y = 0
             i = {
+                'window_start': date,
+                'window_end': date + window,
                 'predict_start': date + window,
                 'predict_end': date + window + predict_range,
+                'threshold_mag': threshold_mag,
                 'earthquakes': []
             }
             for _, row in _range(df, date + window, date + window + predict_range).iterrows():

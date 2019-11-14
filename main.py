@@ -1,5 +1,6 @@
 
 import os
+from ml_earthquake import collect_data
 from ml_earthquake import preprocess
 from ml_earthquake import train
 import numpy as np
@@ -23,10 +24,15 @@ def set_random_seed(s):
 
 if __name__ == '__main__':
     set_random_seed(random_seed)
+
+    data_path = os.path.join(
+        'data', 
+        'earthquakes.csv')
+    if not os.path.exists(data_path):
+        print('collecting earthquake data...')
+        collect_data(data_path)
     X, y, info = preprocess(
-        os.path.join(
-            'data', 
-            'earthquakes.csv'),
+        data_path,
         30,
         7,
         100,
@@ -35,7 +41,6 @@ if __name__ == '__main__':
         139.767551,
         150 * 1000,
         4.0,
-        cache_dir=os.path.join(
-            'work')
+        cache_dir='work'
     )
-    train(X, y, random_state=random_seed)
+    train(X, y, info=info, out_dir='out', random_state=random_seed)
