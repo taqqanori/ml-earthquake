@@ -39,8 +39,11 @@ def preprocess(
         cache_y_path = os.path.join(cache_dir, 'y_{}.npy'.format(y_info_id))
         cache_info_path = os.path.join(cache_dir, 'info_{}.pickle'.format(y_info_id))
     
-    df = pd.read_csv(data_path, parse_dates=['time'])
-    date = _midnight(df['time'].min())
+    df = pd.read_csv(data_path, parse_dates=['time'], index_col=0)
+    df.index = df.index.tz_localize('UTC')
+    df.index = df.index.tz_convert('Asia/Tokyo')
+    df = df[df['type'] == 'earthquake']
+    date = _midnight(df.index.min())
     end_date = _midnight(datetime.now(date.tzinfo) + timedelta(days=1))
     window = timedelta(days=window_days)
     predict_range = timedelta(days=predict_range_days)
@@ -76,13 +79,13 @@ def preprocess(
                 'threshold_mag': threshold_mag,
                 'earthquakes': []
             }
-            for _, row in _range(df, date + window, date + window + predict_range).iterrows():
+            for time, row in _range(df, date + window, date + window + predict_range).iterrows():
                 d = _distance(row['latitude'], row['longitude'], predict_center_lat, predict_center_lng)
                 if d <= predict_radius_meters:
                     if threshold_mag <= row['mag']:
                         _y = 1
                     i['earthquakes'].append({
-                        'time': row['time'],
+                        'time': time,
                         'latitude': row['latitude'],
                         'longitude': row['longitude'],
                         'mag': row['mag']
@@ -122,8 +125,8 @@ def _midnight(d):
     return datetime(year=d.year, month=d.month, day=d.day, tzinfo=d.tzinfo)
 
 def _range(df, start, end):
-    ret = df[start <= df['time']]
-    ret = ret[ret['time'] < end]
+    ret = df[start <= df.index]
+    ret = ret[ret.index < end]
     return ret
 
 # log10(E) = 4.8 + 1.5M
