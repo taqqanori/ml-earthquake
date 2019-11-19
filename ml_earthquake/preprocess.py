@@ -8,8 +8,9 @@ def preprocess(
     data_path,
     window_days,
     predict_range_days,
-    lat_gralularity,
-    lng_gralularity,
+    lat_granularity,
+    lng_granularity,
+    depth_granularity,
     predict_center_lat,
     predict_center_lng,
     predict_radius_meters,
@@ -22,10 +23,11 @@ def preprocess(
     cache_info_path = None
     if cache_dir is not None:
         os.makedirs(cache_dir, exist_ok=True)
-        cache_X_path = os.path.join(cache_dir, 'X_{}_{}_{}_{}.npy'.format(
+        cache_X_path = os.path.join(cache_dir, 'X_{}_{}_{}_{}_{}.npy'.format(
             window_days,
-            lat_gralularity,
-            lng_gralularity,
+            lat_granularity,
+            lng_granularity,
+            depth_granularity,
             predict_range_days,
         ))
         y_info_id = '{}_{}_{}_{}_{}_{}'.format(
@@ -47,8 +49,9 @@ def preprocess(
     end_date = _midnight(datetime.now(date.tzinfo) + timedelta(days=1))
     window = timedelta(days=window_days)
     predict_range = timedelta(days=predict_range_days)
-    lat_gap = 180 / lat_gralularity
-    lng_gap = 360 / lng_gralularity
+    lat_gap = 180 / lat_granularity
+    lng_gap = 360 / lng_granularity
+    depth_gap = df['depth'].max() / depth_granularity
     progress = None
     if show_progress:
         progress = tqdm(total=int((end_date - date) / (window + predict_range)))
@@ -58,14 +61,15 @@ def preprocess(
     while date < end_date:
         # X
         if not os.path.exists(cache_X_path):
-            x = np.zeros([lat_gralularity, lng_gralularity, 2])
+            x = np.zeros([lat_granularity, lng_granularity, depth_granularity, 2])
             for _, row in _range(df, date, date + window).iterrows():
-                lat_index = min(int((row['latitude'] - (-90)) / lat_gap), lat_gralularity - 1)
-                lng_index = min(int((row['longitude'] - (-180)) / lng_gap), lng_gralularity - 1)
+                lat_index = min(int((row['latitude'] - (-90)) / lat_gap), lat_granularity - 1)
+                lng_index = min(int((row['longitude'] - (-180)) / lng_gap), lng_granularity - 1)
+                depth_index = min(int(row['depth'] / depth_gap), depth_granularity - 1)
                 # ch1: magnitude
-                x[lat_index, lng_index, 0] = _sum_mag(row['mag'], x[lat_index, lng_index, 0])
+                x[lat_index, lng_index, depth_index, 0] = _sum_mag(row['mag'], x[lat_index, lng_index, depth_index, 0])
                 # ch2: frequency
-                x[lat_index, lng_index, 1] += 1
+                x[lat_index, lng_index, depth_index, 1] += 1
             X.append(x)
 
         # y, info
@@ -88,6 +92,7 @@ def preprocess(
                         'time': time,
                         'latitude': row['latitude'],
                         'longitude': row['longitude'],
+                        'depth': row['depth'],
                         'mag': row['mag']
                     })
             y.append(_y)
@@ -102,8 +107,8 @@ def preprocess(
     else:
         X = np.array(X)
         # normalize
-        X[:,:,:,0] = X[:,:,:,0] / X[:,:,:,0].max()
-        X[:,:,:,1] = X[:,:,:,1] / X[:,:,:,1].max()
+        for ch in range(X.shape[-1]):
+            X[:,:,:,:,ch] = X[:,:,:,:,ch] / X[:,:,:,:,ch].max()
         np.save(cache_X_path, X)
         
     if os.path.exists(cache_y_path):

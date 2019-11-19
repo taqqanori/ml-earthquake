@@ -6,8 +6,9 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, roc_auc_score
 from keras.callbacks import Callback
 from keras.models import Sequential, load_model
-from keras.layers.convolutional import Conv2D
-from keras.layers.pooling import MaxPool2D
+from keras.layers.convolutional import Conv3D
+from keras.layers.pooling import MaxPool3D
+from keras.layers.normalization import BatchNormalization
 from keras.optimizers import Adam
 from keras.layers.core import Dense, Activation, Dropout, Flatten
 from keras.callbacks import TensorBoard, ModelCheckpoint
@@ -24,30 +25,23 @@ def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=Non
 
     model = Sequential()
 
-    model.add(Conv2D(32, 3, input_shape=(X.shape[1], X.shape[1], X.shape[3])))
+    model.add(Conv3D(32, 3, input_shape=(X.shape[1], X.shape[1], X.shape[3], X.shape[4])))
     model.add(Activation('relu'))
-    model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(Dropout(0.5))
+    model.add(BatchNormalization())
+    model.add(MaxPool3D(pool_size=(2,2,2)))
+    model.add(Dropout(0.8))
 
-    model.add(Conv2D(64, 3))
+    model.add(Conv3D(32, 3))
     model.add(Activation('relu'))
-    model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(Dropout(0.5))
-
-    model.add(Conv2D(128, 3))
-    model.add(Activation('relu'))
-    model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(Dropout(0.5))
-
-    model.add(Conv2D(256, 3))
-    model.add(Activation('relu'))
-    model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(Dropout(0.5))
+    model.add(BatchNormalization())
+    model.add(MaxPool3D(pool_size=(2,2,2)))
+    model.add(Dropout(0.8))
 
     model.add(Flatten())
-    model.add(Dense(100))
+    model.add(Dense(256))
     model.add(Activation('relu'))
-    model.add(Dropout(0.5))
+    model.add(BatchNormalization())
+    model.add(Dropout(0.8))
 
     model.add(Dense(1, activation='sigmoid'))
 
@@ -118,30 +112,35 @@ def _output(out_dir, X_test, y_test, info_test, model_path):
             'freq_heatmap': [],
             'lat_gap': 180 / X_test[i].shape[0],
             'lng_gap': 360 / X_test[i].shape[1],
+            'depth_gap': X_test[i].shape[2],
             'threshold_mag': info_test[i]['threshold_mag'],
             'earthquakes': []
         }
         for lat in range(0, X_test[i].shape[0]):
             for lng in range(0, X_test[i].shape[1]):
-                mag = X_test[i][lat][lng][0]
-                freq = X_test[i][lat][lng][1]
-                if 0 < mag:
-                    detail['mag_heatmap'].append({
-                        'lat': lat,
-                        'lng': lng,
-                        'heat': mag
-                    })
-                if 0 < freq:
-                    detail['freq_heatmap'].append({
-                        'lat': lat,
-                        'lng': lng,
-                        'heat': freq
-                    })
+                for depth in range(0, X_test[i].shape[2]):
+                    mag = X_test[i][lat][lng][depth][0]
+                    freq = X_test[i][lat][lng][depth][1]
+                    if 0 < mag:
+                        detail['mag_heatmap'].append({
+                            'lat': lat,
+                            'lng': lng,
+                            'depth': depth,
+                            'heat': mag
+                        })
+                    if 0 < freq:
+                        detail['freq_heatmap'].append({
+                            'lat': lat,
+                            'lng': lng,
+                            'depth': depth,
+                            'heat': freq
+                        })
         for eq in info_test[i]['earthquakes']:
             detail['earthquakes'].append({
                 'time': eq['time'].strftime(date_format),
                 'latitude': eq['latitude'],
                 'longitude': eq['longitude'],
+                'depth': eq['depth'],
                 'mag': eq['mag']
             })
         _dump(detail, os.path.join(out_dir, detail_path))
