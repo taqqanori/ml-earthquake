@@ -35,12 +35,18 @@ if __name__ == '__main__':
         data_path,
         30,
         7,
-        100,
-        100,
+        50,
+        50,
         35.680934,
         139.767551,
         150 * 1000,
         4.0,
         cache_dir='work'
     )
-    train(X, y, info=info, out_dir='out', random_state=random_seed)
+    train(
+        X, y, info=info, 
+        out_dir='out', 
+        log_dir='log',
+        epochs=1,
+        random_state=random_seed
+    )

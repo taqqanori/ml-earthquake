@@ -58,14 +58,15 @@ def preprocess(
     while date < end_date:
         # X
         if not os.path.exists(cache_X_path):
-            x = np.zeros([lat_gralularity, lng_gralularity, 2])
-            for _, row in _range(df, date, date + window).iterrows():
-                lat_index = min(int((row['latitude'] - (-90)) / lat_gap), lat_gralularity - 1)
-                lng_index = min(int((row['longitude'] - (-180)) / lng_gap), lng_gralularity - 1)
-                # ch1: magnitude
-                x[lat_index, lng_index, 0] = _sum_mag(row['mag'], x[lat_index, lng_index, 0])
-                # ch2: frequency
-                x[lat_index, lng_index, 1] += 1
+            x = np.zeros([window_days, lat_gralularity, lng_gralularity, 2])
+            for win in range(window_days):
+                for _, row in _range(df, date + timedelta(days=win), date + timedelta(days=win+1)).iterrows():
+                    lat_index = min(int((row['latitude'] - (-90)) / lat_gap), lat_gralularity - 1)
+                    lng_index = min(int((row['longitude'] - (-180)) / lng_gap), lng_gralularity - 1)
+                    # ch1: magnitude
+                    x[win, lat_index, lng_index, 0] = _sum_mag(row['mag'], x[win, lat_index, lng_index, 0])
+                    # ch2: frequency
+                    x[win, lat_index, lng_index, 1] += 1
             X.append(x)
 
         # y, info
@@ -102,8 +103,8 @@ def preprocess(
     else:
         X = np.array(X)
         # normalize
-        X[:,:,:,0] = X[:,:,:,0] / X[:,:,:,0].max()
-        X[:,:,:,1] = X[:,:,:,1] / X[:,:,:,1].max()
+        for i in range(X.shape[4]):
+            X[:,:,:,:,i] = X[:,:,:,:,i] / X[:,:,:,:,i].max()
         np.save(cache_X_path, X)
         
     if os.path.exists(cache_y_path):

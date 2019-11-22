@@ -6,7 +6,7 @@ import os
 
 url_base = 'https://earthquake.usgs.gov/fdsnws/event/1/query.csv?starttime={}%2000:00:00&endtime={}%2023:59:59&minmagnitude={}&orderby=time-asc'
 
-def collect_data(out_path, start_date='1945-01-01', end_date=None, min_mag=0, step_days=30, show_progress=True):
+def collect_data(out_path, start_date='1980-01-01', end_date=None, min_mag=0, step_days=30, show_progress=True):
     f = '%Y-%m-%d'
     os.makedirs(os.path.dirname(out_path), exist_ok=True)
 

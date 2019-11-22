@@ -6,8 +6,8 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, roc_auc_score
 from keras.callbacks import Callback
 from keras.models import Sequential, load_model
-from keras.layers.convolutional import Conv2D
-from keras.layers.pooling import MaxPool2D
+from keras.layers.convolutional_recurrent import ConvLSTM2D
+from keras.layers.normalization import BatchNormalization
 from keras.optimizers import Adam
 from keras.layers.core import Dense, Activation, Dropout, Flatten
 from keras.callbacks import TensorBoard, ModelCheckpoint
@@ -24,31 +24,35 @@ def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=Non
 
     model = Sequential()
 
-    model.add(Conv2D(32, 3, input_shape=(X.shape[1], X.shape[1], X.shape[3])))
-    model.add(Activation('relu'))
-    model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(Dropout(0.5))
+    model.add(ConvLSTM2D(
+        input_shape=(X.shape[1], X.shape[2], X.shape[3], X.shape[4]),
+        filters=32,
+        kernel_size=(3, 3),
+        padding='same',
+        dropout=0.3,
+        return_sequence=True
+    ))
+    model.add(BatchNormalization())
 
-    model.add(Conv2D(64, 3))
-    model.add(Activation('relu'))
-    model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(Dropout(0.5))
+    model.add(ConvLSTM2D(
+        filters=32,
+        kernel_size=(3, 3),
+        padding='same',
+        dropout=0.3,
+        return_sequence=True
+    ))
+    model.add(BatchNormalization())
 
-    model.add(Conv2D(128, 3))
-    model.add(Activation('relu'))
-    model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(Dropout(0.5))
-
-    model.add(Conv2D(256, 3))
-    model.add(Activation('relu'))
-    model.add(MaxPool2D(pool_size=(2,2)))
-    model.add(Dropout(0.5))
+    model.add(ConvLSTM2D(
+        filters=32,
+        kernel_size=(3, 3),
+        padding='same',
+        dropout=0.3,
+        return_sequence=False
+    ))
+    model.add(BatchNormalization())
 
     model.add(Flatten())
-    model.add(Dense(100))
-    model.add(Activation('relu'))
-    model.add(Dropout(0.5))
-
     model.add(Dense(1, activation='sigmoid'))
 
     adam = Adam()
@@ -114,29 +118,34 @@ def _output(out_dir, X_test, y_test, info_test, model_path):
 
         # detail
         detail = {
-            'mag_heatmap': [],
-            'freq_heatmap': [],
+            'mag_heatmaps': [],
+            'freq_heatmaps': [],
             'lat_gap': 180 / X_test[i].shape[0],
             'lng_gap': 360 / X_test[i].shape[1],
             'threshold_mag': info_test[i]['threshold_mag'],
             'earthquakes': []
         }
-        for lat in range(0, X_test[i].shape[0]):
-            for lng in range(0, X_test[i].shape[1]):
-                mag = X_test[i][lat][lng][0]
-                freq = X_test[i][lat][lng][1]
-                if 0 < mag:
-                    detail['mag_heatmap'].append({
-                        'lat': lat,
-                        'lng': lng,
-                        'heat': mag
-                    })
-                if 0 < freq:
-                    detail['freq_heatmap'].append({
-                        'lat': lat,
-                        'lng': lng,
-                        'heat': freq
-                    })
+        for win in range(X_test[i].shape[0]):
+            mag_heatmap = []
+            freq_heatmap = []
+            for lat in range(X_test[i].shape[1]):
+                for lng in range(X_test[i].shape[2]):
+                    mag = X_test[i][win][lat][lng][0]
+                    freq = X_test[i][win][lat][lng][1]
+                    if 0 < mag:
+                        mag_heatmap.append({
+                            'lat': lat,
+                            'lng': lng,
+                            'heat': mag
+                        })
+                    if 0 < freq:
+                        freq_heatmap.append({
+                            'lat': lat,
+                            'lng': lng,
+                            'heat': freq
+                        })
+            detail['mag_heatmaps'].append(mag_heatmap)
+            detail['freq_heatmaps'].append(freq_heatmap)
         for eq in info_test[i]['earthquakes']:
             detail['earthquakes'].append({
                 'time': eq['time'].strftime(date_format),
