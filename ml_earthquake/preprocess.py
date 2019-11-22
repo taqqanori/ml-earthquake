@@ -3,19 +3,21 @@ import numpy as np
 import pandas as pd
 from datetime import datetime, timedelta
 from tqdm import tqdm
+from multiprocessing import Pool, Manager
 
 def preprocess(
     data_path,
     window_days,
     predict_range_days,
-    lat_gralularity,
-    lng_gralularity,
+    lat_granularity,
+    lng_granularity,
     predict_center_lat,
     predict_center_lng,
     predict_radius_meters,
     threshold_mag,
     cache_dir=None,
-    show_progress=True
+    show_progress=True,
+    processes=5
 ):
     cache_X_path = None
     cache_y_path = None
@@ -24,8 +26,8 @@ def preprocess(
         os.makedirs(cache_dir, exist_ok=True)
         cache_X_path = os.path.join(cache_dir, 'X_{}_{}_{}_{}.npy'.format(
             window_days,
-            lat_gralularity,
-            lng_gralularity,
+            lat_granularity,
+            lng_granularity,
             predict_range_days,
         ))
         y_info_id = '{}_{}_{}_{}_{}_{}'.format(
@@ -47,56 +49,49 @@ def preprocess(
     end_date = _midnight(datetime.now(date.tzinfo) + timedelta(days=1))
     window = timedelta(days=window_days)
     predict_range = timedelta(days=predict_range_days)
-    lat_gap = 180 / lat_gralularity
-    lng_gap = 360 / lng_gralularity
-    progress = None
-    if show_progress:
-        progress = tqdm(total=int((end_date - date) / (window + predict_range)))
+    lat_gap = 180 / lat_granularity
+    lng_gap = 360 / lng_granularity
+
+    # pool args
+    args = []
+    ns = Manager().Namespace()
+    ns.df = df
+    while date < end_date:
+        args.append((
+            ns,
+            date,
+            window_days,
+            predict_range_days,
+            lat_granularity,
+            lng_granularity,
+            lat_gap,
+            lng_gap,
+            predict_center_lat,
+            predict_center_lng,
+            predict_radius_meters,
+            threshold_mag,
+            cache_X_path,
+            cache_y_path,
+            cache_info_path
+        ))
+        date += (window + predict_range)
     X = []
     y = []
     info = []
-    while date < end_date:
-        # X
-        if not os.path.exists(cache_X_path):
-            x = np.zeros([window_days, lat_gralularity, lng_gralularity, 2])
-            for win in range(window_days):
-                for _, row in _range(df, date + timedelta(days=win), date + timedelta(days=win+1)).iterrows():
-                    lat_index = min(int((row['latitude'] - (-90)) / lat_gap), lat_gralularity - 1)
-                    lng_index = min(int((row['longitude'] - (-180)) / lng_gap), lng_gralularity - 1)
-                    # ch1: magnitude
-                    x[win, lat_index, lng_index, 0] = _sum_mag(row['mag'], x[win, lat_index, lng_index, 0])
-                    # ch2: frequency
-                    x[win, lat_index, lng_index, 1] += 1
-            X.append(x)
 
-        # y, info
-        if not os.path.exists(cache_y_path) or not os.path.exists(cache_info_path):
-            _y = 0
-            i = {
-                'window_start': date,
-                'window_end': date + window,
-                'predict_start': date + window,
-                'predict_end': date + window + predict_range,
-                'threshold_mag': threshold_mag,
-                'earthquakes': []
-            }
-            for time, row in _range(df, date + window, date + window + predict_range).iterrows():
-                d = _distance(row['latitude'], row['longitude'], predict_center_lat, predict_center_lng)
-                if d <= predict_radius_meters:
-                    if threshold_mag <= row['mag']:
-                        _y = 1
-                    i['earthquakes'].append({
-                        'time': time,
-                        'latitude': row['latitude'],
-                        'longitude': row['longitude'],
-                        'mag': row['mag']
-                    })
+    if not os.path.exists(cache_X_path) or \
+       not os.path.exists(cache_y_path) or \
+       not os.path.exists(cache_info_path):
+        pool = Pool(processes=processes)
+        progress = None
+        if show_progress:
+            progress = tqdm(total=len(args))
+        for x, _y, i in pool.imap(_worker, args):
+            X.append(x)
             y.append(_y)
             info.append(i)
-
-        date += (window + predict_range)
-        if show_progress:
-            progress.update()
+            if show_progress:
+                progress.update()
 
     if os.path.exists(cache_X_path):
         X = np.load(cache_X_path)
@@ -121,6 +116,69 @@ def preprocess(
             pickle.dump(info, f)
     
     return X, y, info
+
+def _worker(args):
+    (
+        ns,
+        date,
+        window_days,
+        predict_range_days,
+        lat_granularity,
+        lng_granularity,
+        lat_gap,
+        lng_gap,
+        predict_center_lat,
+        predict_center_lng,
+        predict_radius_meters,
+        threshold_mag,
+        cache_X_path,
+        cache_y_path,
+        cache_info_path 
+    ) = args
+
+    df = ns.df
+    window = timedelta(days=window_days)
+    predict_range = timedelta(days=predict_range_days)
+
+    # X
+    x = None
+    if not os.path.exists(cache_X_path):
+        x = np.zeros([window_days, lat_granularity, lng_granularity, 2])
+        for win in range(window_days):
+            for _, row in _range(df, date + timedelta(days=win), date + timedelta(days=win+1)).iterrows():
+                lat_index = min(int((row['latitude'] - (-90)) / lat_gap), lat_granularity - 1)
+                lng_index = min(int((row['longitude'] - (-180)) / lng_gap), lng_granularity - 1)
+                # ch1: magnitude
+                x[win, lat_index, lng_index, 0] = _sum_mag(row['mag'], x[win, lat_index, lng_index, 0])
+                # ch2: frequency
+                x[win, lat_index, lng_index, 1] += 1
+
+    # y, info
+    y = None
+    i = None
+    if not os.path.exists(cache_y_path) or not os.path.exists(cache_info_path):
+        y = 0
+        i = {
+            'window_start': date,
+            'window_end': date + window,
+            'predict_start': date + window,
+            'predict_end': date + window + predict_range,
+            'threshold_mag': threshold_mag,
+            'earthquakes': []
+        }
+        for time, row in _range(df, date + window, date + window + predict_range).iterrows():
+            d = _distance(row['latitude'], row['longitude'], predict_center_lat, predict_center_lng)
+            if d <= predict_radius_meters:
+                if threshold_mag <= row['mag']:
+                    y = 1
+                i['earthquakes'].append({
+                    'time': time,
+                    'latitude': row['latitude'],
+                    'longitude': row['longitude'],
+                    'mag': row['mag']
+                })
+    
+    return x, y, i
 
 def _midnight(d):
     return datetime(year=d.year, month=d.month, day=d.day, tzinfo=d.tzinfo)

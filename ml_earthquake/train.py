@@ -30,7 +30,7 @@ def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=Non
         kernel_size=(3, 3),
         padding='same',
         dropout=0.3,
-        return_sequence=True
+        return_sequences=True
     ))
     model.add(BatchNormalization())
 
@@ -39,7 +39,7 @@ def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=Non
         kernel_size=(3, 3),
         padding='same',
         dropout=0.3,
-        return_sequence=True
+        return_sequences=True
     ))
     model.add(BatchNormalization())
 
@@ -48,7 +48,7 @@ def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=Non
         kernel_size=(3, 3),
         padding='same',
         dropout=0.3,
-        return_sequence=False
+        return_sequences=False
     ))
     model.add(BatchNormalization())
 

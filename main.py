@@ -47,6 +47,5 @@ if __name__ == '__main__':
         X, y, info=info, 
         out_dir='out', 
         log_dir='log',
-        epochs=1,
         random_state=random_seed
     )
