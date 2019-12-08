@@ -53,6 +53,10 @@ def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=Non
     model.add(BatchNormalization())
 
     model.add(Flatten())
+
+    model.add(Dense(100, activation='relu'))
+    model.add(Dropout(0.3))
+
     model.add(Dense(1, activation='sigmoid'))
 
     adam = Adam()
@@ -168,13 +172,13 @@ class _Reporter(Callback):
 
     def on_epoch_end(self, epoch, logs={}):
         acc, auc, f1, precision, recall, tp, fn, fp, tn = _eval(self.model, self.X_test, self.y_test)
-        print('\nAUC: {:.2f}, F1: {:.2f}, acc: {:.2f}, precision: {:.2f}, recall: {:.2f}, TP: {}, FN: {}, FP: {}, TN: {}'.format(\
+        print('\nAUC: {:.3f}, F1: {:.3f}, acc: {:.3f}, precision: {:.3f}, recall: {:.3f}, TP: {}, FN: {}, FP: {}, TN: {}'.format(\
             auc, f1, acc, precision, recall, tp, fn, fp, tn
         ))
 
 def _eval(model, X_test, y_test):
     y_pred = model.predict(X_test).reshape(-1)
-    tp, fn, fp, tn = confusion_matrix(y_test, y_pred >= 0.5).ravel()
+    tn, fp, fn, tp = confusion_matrix(y_test, y_pred >= 0.5).ravel()
     auc = roc_auc_score(y_test, y_pred)
     f1 = (2 * tp) / (2 * tp + fp + fn)
     acc = (tp + tn) / (tp + tn + fp + fn)

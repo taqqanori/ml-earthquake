@@ -46,7 +46,7 @@ def preprocess(
     df.index = df.index.tz_convert('Asia/Tokyo')
     df = df[df['type'] == 'earthquake']
     date = _midnight(df.index.min())
-    end_date = _midnight(datetime.now(date.tzinfo) + timedelta(days=1))
+    end_date = _midnight(df.index.max())
     window = timedelta(days=window_days)
     predict_range = timedelta(days=predict_range_days)
     lat_gap = 180 / lat_granularity
