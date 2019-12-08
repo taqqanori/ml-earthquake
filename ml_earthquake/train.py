@@ -12,10 +12,11 @@ from keras.optimizers import Adam
 from keras.layers.core import Dense, Activation, Dropout, Flatten
 from keras.callbacks import TensorBoard, ModelCheckpoint
 from datetime import datetime
+from imblearn.over_sampling import SMOTE
 
 date_format = '%Y%m%d'
 
-def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=None, random_state=4126):
+def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=None, smote=True, use_class_weight=True, random_state=4126):
     if out_dir is not None:
         os.makedirs(out_dir, exist_ok=True)
 
@@ -26,25 +27,7 @@ def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=Non
 
     model.add(ConvLSTM2D(
         input_shape=(X.shape[1], X.shape[2], X.shape[3], X.shape[4]),
-        filters=32,
-        kernel_size=(3, 3),
-        padding='same',
-        dropout=0.3,
-        return_sequences=True
-    ))
-    model.add(BatchNormalization())
-
-    model.add(ConvLSTM2D(
-        filters=32,
-        kernel_size=(3, 3),
-        padding='same',
-        dropout=0.3,
-        return_sequences=True
-    ))
-    model.add(BatchNormalization())
-
-    model.add(ConvLSTM2D(
-        filters=32,
+        filters=30,
         kernel_size=(3, 3),
         padding='same',
         dropout=0.3,
@@ -59,7 +42,7 @@ def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=Non
 
     model.add(Dense(1, activation='sigmoid'))
 
-    adam = Adam()
+    adam = Adam(lr=1e-5)
     model.compile(optimizer=adam, loss='binary_crossentropy', metrics=["accuracy"])
     model.summary()
 
@@ -75,10 +58,32 @@ def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=Non
     if log_dir is not None:
         log_path = os.path.join(log_dir, datetime.now().strftime(date_format + '_%H%M%S'))
         callbacks.append(TensorBoard(log_dir=log_path))
+    
+    positive = (0.5 <= y_train).sum()
+    negative = (y_train < 0.5).sum()
+    print('train data balance P:{} : N:{}'.format(positive, negative))
+    class_weight = {
+        0: positive / (positive + negative),
+        1: negative / (positive + negative),
+    } if use_class_weight else None
+
+    if smote:
+        s = SMOTE(random_state=random_state)
+        X_train_resample, y_train = s.fit_sample(X_train.reshape(X_train.shape[0], -1), y_train)
+        X_train = X_train_resample.reshape(\
+            X_train_resample.shape[0], \
+            X_train.shape[1], \
+            X_train.shape[2], \
+            X_train.shape[3], \
+            X_train.shape[4])
+        positive = (0.5 <= y_train).sum()
+        negative = (y_train < 0.5).sum()
+        print('SMOTE performed train data balance P:{} : N:{}'.format(positive, negative))
 
     model.fit(X_train, y_train, \
         epochs=epochs, callbacks=callbacks, \
-        validation_data=(X_test, y_test))
+        validation_data=(X_test, y_test),
+        class_weight=class_weight)
     
     if out_dir is not None and info is not None:
         _output(out_dir, X_test, y_test, info_test, model_path)

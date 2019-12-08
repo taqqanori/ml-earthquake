@@ -33,14 +33,14 @@ if __name__ == '__main__':
         collect_data(data_path)
     X, y, info = preprocess(
         data_path,
-        5,
+        15,
         1,
         25,
         20,
         35.680934,
         139.767551,
         150 * 1000,
-        5.0,
+        4.0,
         cache_dir='work'
     )
     train(

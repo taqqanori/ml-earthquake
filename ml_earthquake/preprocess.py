@@ -42,7 +42,8 @@ def preprocess(
         cache_info_path = os.path.join(cache_dir, 'info_{}.pickle'.format(y_info_id))
     
     df = pd.read_csv(data_path, parse_dates=['time'], index_col=0)
-    df.index = df.index.tz_localize('UTC')
+    if df.index[0].tz is None:
+        df.index = df.index.tz_localize('UTC')
     df.index = df.index.tz_convert('Asia/Tokyo')
     df = df[df['type'] == 'earthquake']
     date = _midnight(df.index.min())
@@ -98,7 +99,7 @@ def preprocess(
     else:
         X = np.array(X)
         # normalize
-        for i in range(X.shape[4]):
+        for i in range(0, X.shape[4]):
             X[:,:,:,:,i] = X[:,:,:,:,i] / X[:,:,:,:,i].max()
         np.save(cache_X_path, X)
         
