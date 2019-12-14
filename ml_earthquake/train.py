@@ -16,7 +16,7 @@ from imblearn.over_sampling import SMOTE
 
 date_format = '%Y%m%d'
 
-def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=None, smote=True, use_class_weight=True, random_state=4126):
+def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=None, smote=True, use_class_weight=False, random_state=4126):
     if out_dir is not None:
         os.makedirs(out_dir, exist_ok=True)
 

@@ -99,8 +99,10 @@ def preprocess(
     else:
         X = np.array(X)
         # normalize
-        for i in range(0, X.shape[4]):
-            X[:,:,:,:,i] = X[:,:,:,:,i] / X[:,:,:,:,i].max()
+        for i in range(0, X.shape[-1]):
+            max = X[:,:,:,:,i].max()
+            min = X[:,:,:,:,i].min()
+            X[:,:,:,:,i] = (X[:,:,:,:,i] - min) / (max - min) 
         np.save(cache_X_path, X)
         
     if os.path.exists(cache_y_path):
@@ -147,8 +149,8 @@ def _worker(args):
         x = np.zeros([window_days, lat_granularity, lng_granularity, 2])
         for win in range(window_days):
             for _, row in _range(df, date + timedelta(days=win), date + timedelta(days=win+1)).iterrows():
-                lat_index = min(int((row['latitude'] - (-90)) / lat_gap), lat_granularity - 1)
-                lng_index = min(int((row['longitude'] - (-180)) / lng_gap), lng_granularity - 1)
+                lat_index = min(int((row['latitude'] - (-90)) // lat_gap), lat_granularity - 1)
+                lng_index = min(int((row['longitude'] - (-180) - predict_center_lng) // lng_gap), lng_granularity - 1)
                 # ch1: magnitude
                 x[win, lat_index, lng_index, 0] = _sum_mag(row['mag'], x[win, lat_index, lng_index, 0])
                 # ch2: frequency
@@ -191,6 +193,10 @@ def _range(df, start, end):
 
 # log10(E) = 4.8 + 1.5M
 def _sum_mag(m1, m2):
+    if m1 == 0:
+        return m2
+    if m2 == 0:
+        return m1
     e1 = _to_energy(m1)
     e2 = _to_energy(m2)
     return (math.log10(e1 + e2) - 4.8) / 1.5
