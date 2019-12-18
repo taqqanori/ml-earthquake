@@ -31,12 +31,12 @@ if __name__ == '__main__':
     if not os.path.exists(data_path):
         print('collecting earthquake data...')
         collect_data(data_path)
-    X, y, info = preprocess(
+    X_train, y_train, X_test, y_test, _, info_test = preprocess(
         data_path,
         15,
         1,
-        25,
-        50,
+        20,
+        30,
         35.680934,
         139.767551,
         150 * 1000,
@@ -44,7 +44,9 @@ if __name__ == '__main__':
         cache_dir='work'
     )
     train(
-        X, y, info=info, 
+        X_train, y_train, 
+        X_test, y_test, 
+        info_test=info_test, 
         out_dir='out', 
         log_dir='log',
         random_state=random_seed

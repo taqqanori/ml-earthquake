@@ -15,9 +15,11 @@ def preprocess(
     predict_center_lng,
     predict_radius_meters,
     threshold_mag,
+    test_ratio=0.25,
     cache_dir=None,
     show_progress=True,
-    processes=5
+    processes=5,
+    chunk_size=100
 ):
     cache_X_path = None
     cache_y_path = None
@@ -40,148 +42,132 @@ def preprocess(
         )
         cache_y_path = os.path.join(cache_dir, 'y_{}.npy'.format(y_info_id))
         cache_info_path = os.path.join(cache_dir, 'info_{}.pickle'.format(y_info_id))
-    
-    df = pd.read_csv(data_path, parse_dates=['time'], index_col=0)
-    if df.index[0].tz is None:
-        df.index = df.index.tz_localize('UTC')
-    df.index = df.index.tz_convert('Asia/Tokyo')
-    df = df[df['type'] == 'earthquake']
-    date = _midnight(df.index.min())
-    end_date = _midnight(df.index.max())
-    window = timedelta(days=window_days)
-    predict_range = timedelta(days=predict_range_days)
+
     lat_gap = 180 / lat_granularity
     lng_gap = 360 / lng_granularity
-
-    # pool args
-    args = []
-    ns = Manager().Namespace()
-    ns.df = df
-    while date < end_date:
-        args.append((
-            ns,
-            date,
-            window_days,
-            predict_range_days,
-            lat_granularity,
-            lng_granularity,
-            lat_gap,
-            lng_gap,
-            predict_center_lat,
-            predict_center_lng,
-            predict_radius_meters,
-            threshold_mag,
-            cache_X_path,
-            cache_y_path,
-            cache_info_path
-        ))
-        date += (window + predict_range)
+    
+    if os.path.exists(cache_X_path) and \
+       os.path.exists(cache_y_path) and \
+       os.path.exists(cache_info_path):
+        X = np.load(cache_X_path)
+        y = np.load(cache_y_path)
+        with open(cache_info_path, 'rb') as f:
+            info = pickle.load(f)
+        return _train_test_split(X, y, info, window_days, predict_range_days, test_ratio)
+    
     X = []
     y = []
     info = []
-
-    if not os.path.exists(cache_X_path) or \
-       not os.path.exists(cache_y_path) or \
-       not os.path.exists(cache_info_path):
-        pool = Pool(processes=processes)
-        progress = None
-        if show_progress:
-            progress = tqdm(total=len(args))
-        for x, _y, i in pool.imap(_worker, args):
-            X.append(x)
-            y.append(_y)
-            info.append(i)
-            if show_progress:
-                progress.update()
-
-    if os.path.exists(cache_X_path):
-        X = np.load(cache_X_path)
-    else:
-        X = np.array(X)
-        # normalize
-        for i in range(0, X.shape[-1]):
-            max = X[:,:,:,:,i].max()
-            min = X[:,:,:,:,i].min()
-            X[:,:,:,:,i] = (X[:,:,:,:,i] - min) / (max - min) 
-        np.save(cache_X_path, X)
-        
-    if os.path.exists(cache_y_path):
-        y = np.load(cache_y_path)
-    else:
-        y = np.array(y)
-        np.save(cache_y_path, y)
-
-    if os.path.exists(cache_info_path):
-        with open(cache_info_path, 'rb') as f:
-            info = pickle.load(f)
-    else:
-        with open(cache_info_path, 'wb') as f:
-            pickle.dump(info, f)
-    
-    return X, y, info
-
-def _worker(args):
-    (
-        ns,
-        date,
-        window_days,
-        predict_range_days,
-        lat_granularity,
-        lng_granularity,
-        lat_gap,
-        lng_gap,
-        predict_center_lat,
-        predict_center_lng,
-        predict_radius_meters,
-        threshold_mag,
-        cache_X_path,
-        cache_y_path,
-        cache_info_path 
-    ) = args
-
-    df = ns.df
-    window = timedelta(days=window_days)
-    predict_range = timedelta(days=predict_range_days)
-
-    # X
+    X_buf = []
+    y_buf = []
+    eq_buf = []
     x = None
-    if not os.path.exists(cache_X_path):
-        x = np.zeros([window_days, lat_granularity, lng_granularity, 2])
-        for win in range(window_days):
-            for _, row in _range(df, date + timedelta(days=win), date + timedelta(days=win+1)).iterrows():
-                lat_index = min(int((row['latitude'] - (-90)) // lat_gap), lat_granularity - 1)
-                lng_index = min(int((row['longitude'] - (-180) - predict_center_lng) // lng_gap), lng_granularity - 1)
-                # ch1: magnitude
-                x[win, lat_index, lng_index, 0] = _sum_mag(row['mag'], x[win, lat_index, lng_index, 0])
-                # ch2: frequency
-                x[win, lat_index, lng_index, 1] += 1
+    _y = None
+    eq = None
+    date = None
+    progress = None
+    for df in pd.read_csv(data_path, parse_dates=['time'], index_col=0, chunksize=chunk_size):
+        if df.index[0].tz is None:
+            df.index = df.index.tz_localize('UTC')
+        df.index = df.index.tz_convert('Asia/Tokyo')
+        df = df[df['type'] == 'earthquake']
+        df = df.sort_index()
 
-    # y, info
-    y = None
-    i = None
-    if not os.path.exists(cache_y_path) or not os.path.exists(cache_info_path):
-        y = 0
-        i = {
-            'window_start': date,
-            'window_end': date + window,
-            'predict_start': date + window,
-            'predict_end': date + window + predict_range,
-            'threshold_mag': threshold_mag,
-            'earthquakes': []
-        }
-        for time, row in _range(df, date + window, date + window + predict_range).iterrows():
+        if date is None:
+            # first line
+            date = _midnight(df.index.min())
+            progress = tqdm(total=int((datetime.now(date.tzinfo) - date) // timedelta(days=1)))
+            x = np.zeros([lat_granularity, lng_granularity, 3])
+            _y = False
+            eq = []
+        
+        for d, row in df.iterrows():
+            if date.day != d.day:
+                # came to next (or later) day
+                date += timedelta(days=1)
+                progress.update()
+                _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, window_days, predict_range_days, threshold_mag)
+                x = np.zeros([lat_granularity, lng_granularity, 3])
+                _y = False
+                eq = []
+                for i in range(int((_midnight(d) - _midnight(date)) // timedelta(days=1))):
+                    # blank days
+                    _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, window_days, predict_range_days, threshold_mag)
+                    date += timedelta(days=1)
+                    progress.update()
+                
+            # x
+            lat_index = min(int((row['latitude'] - (-90)) // lat_gap), lat_granularity - 1)
+            lng_index = min(int((row['longitude'] - (-180) - predict_center_lng) // lng_gap), lng_granularity - 1)
+            # ch1: magnitude
+            x[lat_index, lng_index, 0] = _sum_mag(row['mag'], x[lat_index, lng_index, 0])
+            # ch2: frequency
+            x[lat_index, lng_index, 1] += 1
+            # ch3: average depth
+            avg = x[lat_index, lng_index, 2]
+            count = x[lat_index, lng_index, 1]
+            x[lat_index, lng_index, 2] = avg * ((count - 1) / count) + (row['depth'] / count)
+
+            # y
             d = _distance(row['latitude'], row['longitude'], predict_center_lat, predict_center_lng)
             if d <= predict_radius_meters:
                 if threshold_mag <= row['mag']:
-                    y = 1
-                i['earthquakes'].append({
-                    'time': time,
-                    'latitude': row['latitude'],
-                    'longitude': row['longitude'],
-                    'mag': row['mag']
-                })
+                    _y = True
+                    # info
+                    eq.append({
+                        'time': d,
+                        'latitude': row['latitude'],
+                        'longitude': row['longitude'],
+                        'mag': row['mag']
+                    })
+
+    X = np.array(X)
+    # normalize
+    for i in range(0, X.shape[-1]):
+        _max = X[:,:,:,:,i].max()
+        _min = X[:,:,:,:,i].min()
+        X[:,:,:,:,i] = (X[:,:,:,:,i] - _min) / (_max - _min) 
+    np.save(cache_X_path, X)
+        
+    y = np.array(y)
+    np.save(cache_y_path, y)
+
+    with open(cache_info_path, 'wb') as f:
+        pickle.dump(info, f)
     
-    return x, y, i
+    return _train_test_split(X, y, info, window_days, predict_range_days, test_ratio)
+
+def _train_test_split(X, y, info, window_days, predict_range_days, test_ratio):
+    test_count = int(len(X) * test_ratio)
+    train_index = np.arange(0, len(X) - (test_count + window_days + predict_range_days))
+    test_index = np.arange(len(X) - test_count, len(X))
+    info = np.array(info)
+    return X[train_index], y[train_index], X[test_index], y[test_index], info[train_index], info[test_index]
+
+def _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, window_days, predict_range_days, threshold_mag):
+    X_buf.append(x)
+    y_buf.append(_y)
+    eq_buf.append(eq)
+    if len(X_buf) < window_days + predict_range_days:
+        # just beginning, not enough stored in buf
+        if predict_range_days < len(y_buf):
+            y_buf.pop(0)
+        if predict_range_days < len(eq_buf):
+            eq_buf.pop(0)
+        return
+    X_buf.pop(0)
+    y_buf.pop(0)
+    eq_buf.pop(0)
+    X.append(np.array(X_buf[0:window_days]))
+    y.append(any(y_buf))
+    info.append({
+        'window_start': date - timedelta(days=window_days + predict_range_days),
+        'window_end': date - timedelta(days=predict_range_days),
+        'predict_start': date - timedelta(days=predict_range_days),
+        'predict_end': date,
+        'threshold_mag': threshold_mag,
+        'earthquakes': sum(eq_buf, [])
+    })
 
 def _midnight(d):
     return datetime(year=d.year, month=d.month, day=d.day, tzinfo=d.tzinfo)

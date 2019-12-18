@@ -4,7 +4,7 @@ from tqdm import tqdm
 import pandas as pd
 import os
 
-url_base = 'https://earthquake.usgs.gov/fdsnws/event/1/query.csv?starttime={}%2000:00:00&endtime={}%2023:59:59&minmagnitude={}&orderby=time-asc'
+url_base = 'https://earthquake.usgs.gov/fdsnws/event/1/query.csv?starttime={}%2000:00:00&endtime={}%2000:00:00&minmagnitude={}&orderby=time-asc'
 
 def collect_data(out_path, start_date='1980-01-01', end_date=None, min_mag=0, step_days=30, show_progress=True):
     f = '%Y-%m-%d'
@@ -29,7 +29,7 @@ def collect_data(out_path, start_date='1980-01-01', end_date=None, min_mag=0, st
                 (date + timedelta(days=end_offset)).strftime(f), \
                 min_mag)
             try:
-                step_df = _concat(step_df, pd.read_csv(url))
+                step_df = _concat(step_df, pd.read_csv(url, parse_dates=['time']))
             except Exception as e:
                 # failure
                 print(e)
@@ -44,6 +44,7 @@ def collect_data(out_path, start_date='1980-01-01', end_date=None, min_mag=0, st
             date += timedelta(days=step_days)
             if show_progress:
                 progress.update()
+    df = df.sort_values('time')
     df.to_csv(out_path, index=None)
 
 def _concat(df1, df2):

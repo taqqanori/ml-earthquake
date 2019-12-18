@@ -16,17 +16,14 @@ from imblearn.over_sampling import SMOTE
 
 date_format = '%Y%m%d'
 
-def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=None, smote=True, use_class_weight=False, random_state=4126):
+def train(X_train, y_train, X_test, y_test, info_test=None, out_dir=None, epochs=100, log_dir=None, smote=True, use_class_weight=False, random_state=4126):
     if out_dir is not None:
         os.makedirs(out_dir, exist_ok=True)
-
-    X_train, X_test, y_train, y_test, info_train, info_test = \
-        train_test_split(X, y, info, test_size=test_size, random_state=random_state)
 
     model = Sequential()
 
     model.add(ConvLSTM2D(
-        input_shape=(X.shape[1], X.shape[2], X.shape[3], X.shape[4]),
+        input_shape=(X_train.shape[1], X_train.shape[2], X_train.shape[3], X_train.shape[4]),
         filters=30,
         kernel_size=(3, 3),
         padding='same',
@@ -85,7 +82,7 @@ def train(X, y, info=None, out_dir=None, test_size=0.25, epochs=100, log_dir=Non
         validation_data=(X_test, y_test),
         class_weight=class_weight)
     
-    if out_dir is not None and info is not None:
+    if out_dir is not None and info_test is not None:
         _output(out_dir, X_test, y_test, info_test, model_path)
     
 def _output(out_dir, X_test, y_test, info_test, model_path):

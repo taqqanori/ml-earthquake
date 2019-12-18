@@ -11,14 +11,12 @@ def scatter(lat, lng, r):
     y_in = []
     df = pd.read_csv('data/earthquakes.csv', parse_dates=['time'], index_col=0)
     for date, row in tqdm(df.iterrows(), total=len(df)):
-        if row['mag'] < 5.5:
-            continue
         if _distance(lat, lng, row['latitude'], row['longitude']) < r:
             x_in.append(date)
-            y_in.append(row['depth'])
+            y_in.append(row['mag'])
         else:
             x_out.append(date)
-            y_out.append(row['depth'])
+            y_out.append(row['mag'])
             
     plt.scatter(x_out, y_out, s=0.1, alpha=0.1)
     plt.scatter(x_in, y_in, s=0.1)
@@ -50,14 +48,14 @@ def count(lat, lng, r, mag):
     print('P:N={}:{}'.format(p, n))
 
 if __name__ == '__main__':
-    # scatter(
-    #     35.680934,
-    #     139.767551,
-    #     150 * 1000,
-    # )
-    count(
+    scatter(
         35.680934,
         139.767551,
         150 * 1000,
-        4.0
     )
+    # count(
+    #     35.680934,
+    #     139.767551,
+    #     150 * 1000,
+    #     4.0
+    # )
