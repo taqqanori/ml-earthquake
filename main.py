@@ -14,8 +14,8 @@ def set_random_seed(s):
     np.random.seed(s)
     rn.seed(s)
     session_conf = tf.ConfigProto(
-        intra_op_parallelism_threads=1,
-        inter_op_parallelism_threads=1
+        # intra_op_parallelism_threads=1,
+        # inter_op_parallelism_threads=1
     )
     from keras import backend as K
     tf.set_random_seed(s)
@@ -49,5 +49,7 @@ if __name__ == '__main__':
         info_test=info_test, 
         out_dir='out', 
         log_dir='log',
-        random_state=random_seed
+        random_state=random_seed,
+        smote=False,
+        under_sampleng=True
     )

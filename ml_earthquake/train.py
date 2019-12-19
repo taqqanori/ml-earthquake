@@ -13,10 +13,11 @@ from keras.layers.core import Dense, Activation, Dropout, Flatten
 from keras.callbacks import TensorBoard, ModelCheckpoint
 from datetime import datetime
 from imblearn.over_sampling import SMOTE
+from imblearn.under_sampling import RandomUnderSampler
 
 date_format = '%Y%m%d'
 
-def train(X_train, y_train, X_test, y_test, info_test=None, out_dir=None, epochs=100, log_dir=None, smote=True, use_class_weight=False, random_state=4126):
+def train(X_train, y_train, X_test, y_test, info_test=None, out_dir=None, epochs=100, log_dir=None, smote=True, under_sampleng=False, use_class_weight=False, random_state=4126):
     if out_dir is not None:
         os.makedirs(out_dir, exist_ok=True)
 
@@ -39,7 +40,7 @@ def train(X_train, y_train, X_test, y_test, info_test=None, out_dir=None, epochs
 
     model.add(Dense(1, activation='sigmoid'))
 
-    adam = Adam(lr=1e-5)
+    adam = Adam(lr=5e-6)
     model.compile(optimizer=adam, loss='binary_crossentropy', metrics=["accuracy"])
     model.summary()
 
@@ -64,9 +65,16 @@ def train(X_train, y_train, X_test, y_test, info_test=None, out_dir=None, epochs
         1: negative / (positive + negative),
     } if use_class_weight else None
 
+    resampler = None
+    resample_method = None
     if smote:
-        s = SMOTE(random_state=random_state)
-        X_train_resample, y_train = s.fit_sample(X_train.reshape(X_train.shape[0], -1), y_train)
+        resampler = SMOTE(random_state=random_state)
+        resample_method = 'SMOTE'
+    elif under_sampleng:
+        resampler = RandomUnderSampler(random_state=random_state)
+        resample_method = 'Under Sampling'
+    if resampler is not None:
+        X_train_resample, y_train = resampler.fit_sample(X_train.reshape(X_train.shape[0], -1), y_train)
         X_train = X_train_resample.reshape(\
             X_train_resample.shape[0], \
             X_train.shape[1], \
@@ -75,7 +83,8 @@ def train(X_train, y_train, X_test, y_test, info_test=None, out_dir=None, epochs
             X_train.shape[4])
         positive = (0.5 <= y_train).sum()
         negative = (y_train < 0.5).sum()
-        print('SMOTE performed train data balance P:{} : N:{}'.format(positive, negative))
+        print('{} performed train data balance P:{} : N:{}'.format(
+            resample_method, positive, negative))
 
     model.fit(X_train, y_train, \
         epochs=epochs, callbacks=callbacks, \
