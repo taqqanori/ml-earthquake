@@ -17,7 +17,21 @@ from imblearn.under_sampling import RandomUnderSampler
 
 date_format = '%Y%m%d'
 
-def train(X_train, y_train, X_test, y_test, info_test=None, out_dir=None, epochs=100, log_dir=None, smote=True, under_sampleng=False, use_class_weight=False, random_state=4126):
+def train(
+    X_train,
+    y_train,
+    X_test,
+    y_test,
+    info_test=None,
+    out_dir=None,
+    model_file_name='best_model.h5',
+    epochs=100,
+    dropout=0.3,
+    log_dir=None,
+    smote=True,
+    under_sampleng=False,
+    use_class_weight=False,
+    random_state=4126):
     if out_dir is not None:
         os.makedirs(out_dir, exist_ok=True)
 
@@ -28,7 +42,7 @@ def train(X_train, y_train, X_test, y_test, info_test=None, out_dir=None, epochs
         filters=30,
         kernel_size=(3, 3),
         padding='same',
-        dropout=0.3,
+        dropout=dropout,
         return_sequences=False
     ))
     model.add(BatchNormalization())
@@ -36,7 +50,7 @@ def train(X_train, y_train, X_test, y_test, info_test=None, out_dir=None, epochs
     model.add(Flatten())
 
     model.add(Dense(100, activation='relu'))
-    model.add(Dropout(0.3))
+    model.add(Dropout(dropout))
 
     model.add(Dense(1, activation='sigmoid'))
 
@@ -48,7 +62,7 @@ def train(X_train, y_train, X_test, y_test, info_test=None, out_dir=None, epochs
 
     model_path = None
     if out_dir is not None:
-        model_path = os.path.join(out_dir, 'best_model.h5')
+        model_path = os.path.join(out_dir, model_file_name)
         callbacks.append(
             ModelCheckpoint(filepath=model_path, verbose=1, save_best_only=True)
         )

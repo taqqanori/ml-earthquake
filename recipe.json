@@ -1,0 +1,44 @@
+{
+    "recipe": [
+        {
+            "id": "tokyo",
+            "displayName": {
+                "ja": "東京",
+                "en": "Tokyo"
+            },
+            "window_days": 15,
+            "predict_range_days": 1,
+            "lat_granularity": 20,
+            "lng_granularity": 30,
+            "predict_center_lat": 35.680934,
+            "predict_center_lng": 139.767551,
+            "predict_radius_meters": 150000,
+            "threshold_mag": 4.0,
+            "test_ratio": 0.25,
+            "epochs": 50,
+            "dropout": 0.3,
+            "smote": false,
+            "under_sampling": true
+        },
+        {
+            "id": "niigata",
+            "displayName": {
+                "ja": "新潟",
+                "en": "Niigata"
+            },
+            "window_days": 15,
+            "predict_range_days": 1,
+            "lat_granularity": 20,
+            "lng_granularity": 30,
+            "predict_center_lat": 37.900865,
+            "predict_center_lng": 139.023056,
+            "predict_radius_meters": 150000,
+            "threshold_mag": 3.0,
+            "test_ratio": 0.25,
+            "epochs": 50,
+            "dropout": 0.3,
+            "smote": false,
+            "under_sampling": true
+        }
+    ]
+}

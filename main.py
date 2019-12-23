@@ -1,13 +1,11 @@
 
-import os
+import os, fire, json
 from ml_earthquake import collect_data
 from ml_earthquake import preprocess
 from ml_earthquake import train
 import numpy as np
 import random as rn
 import tensorflow as tf
-
-random_seed = 4126
 
 def set_random_seed(s):
     os.environ['PYTHONHASHSEED'] = '0'
@@ -22,34 +20,56 @@ def set_random_seed(s):
     sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
     K.set_session(sess)
 
-if __name__ == '__main__':
+def main(
+    recipe='recipe.json',
+    recipe_id=None,
+    data_dir='data',
+    out_dir='out',
+    work_dir='work',
+    log_dir='log',
+    random_seed=4126):
     set_random_seed(random_seed)
 
+    if not os.path.exists(recipe):
+        raise Exception('recipe: {} does not exists...'.format(recipe))
+
     data_path = os.path.join(
-        'data', 
+        data_dir,
         'earthquakes.csv')
     if not os.path.exists(data_path):
         print('collecting earthquake data...')
         collect_data(data_path)
-    X_train, y_train, X_test, y_test, _, info_test = preprocess(
-        data_path,
-        15,
-        1,
-        20,
-        30,
-        35.680934,
-        139.767551,
-        150 * 1000,
-        4.0,
-        cache_dir='work'
-    )
-    train(
-        X_train, y_train, 
-        X_test, y_test, 
-        info_test=info_test, 
-        out_dir='out', 
-        log_dir='log',
-        random_state=random_seed,
-        smote=False,
-        under_sampleng=True
-    )
+
+    with open(recipe, 'r', encoding='utf-8') as f:
+        recipe_obj = json.load(f)
+        for r in recipe_obj['recipe']:
+            if recipe_id is not None and recipe_id != r['id']:
+                continue
+            print('start preprocess and train for recipe ID: {}'.format(r['id']))
+            X_train, y_train, X_test, y_test, _, info_test = preprocess(
+                data_path,
+                r['window_days'],
+                r['predict_range_days'],
+                r['lat_granularity'],
+                r['lng_granularity'],
+                r['predict_center_lat'],
+                r['predict_center_lng'],
+                r['predict_radius_meters'],
+                r['threshold_mag'],
+                cache_dir=work_dir
+            )
+            train(
+                X_train, y_train,
+                X_test, y_test,
+                info_test=info_test,
+                out_dir=os.path.join(out_dir, r['id']),
+                log_dir=log_dir,
+                epochs=r['epochs'],
+                dropout=r['dropout'],
+                random_state=random_seed,
+                smote=r['smote'],
+                under_sampleng=r['under_sampling']
+            )
+
+if __name__ == '__main__':
+    fire.Fire(main)
