@@ -25,6 +25,7 @@ def train(
     info_test=None,
     out_dir=None,
     model_file_name='best_model.h5',
+    learning_rate=5e-6,
     epochs=100,
     dropout=0.3,
     log_dir=None,
@@ -54,7 +55,7 @@ def train(
 
     model.add(Dense(1, activation='sigmoid'))
 
-    adam = Adam(lr=5e-6)
+    adam = Adam(lr=learning_rate)
     model.compile(optimizer=adam, loss='binary_crossentropy', metrics=["accuracy"])
     model.summary()
 

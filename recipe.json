@@ -15,6 +15,7 @@
             "predict_radius_meters": 150000,
             "threshold_mag": 4.0,
             "test_ratio": 0.25,
+            "learning_rate": 5e-6,
             "epochs": 50,
             "dropout": 0.3,
             "smote": false,
@@ -35,8 +36,9 @@
             "predict_radius_meters": 150000,
             "threshold_mag": 3.0,
             "test_ratio": 0.25,
+            "learning_rate": 5e-6,
             "epochs": 50,
-            "dropout": 0.3,
+            "dropout": 0.5,
             "smote": false,
             "under_sampling": true
         }
