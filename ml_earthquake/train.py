@@ -13,7 +13,7 @@ from keras.layers.core import Dense, Activation, Dropout, Flatten
 from keras.callbacks import TensorBoard, ModelCheckpoint
 from datetime import datetime
 from imblearn.over_sampling import SMOTE
-from imblearn.under_sampling import RandomUnderSampler
+from imblearn.under_sampling import RandomUnderSampler, ClusterCentroids, NearMiss, TomekLinks, CondensedNearestNeighbour
 
 date_format = '%Y%m%d'
 
@@ -29,8 +29,7 @@ def train(
     epochs=100,
     dropout=0.3,
     log_dir=None,
-    smote=True,
-    under_sampleng=False,
+    resampling_method=None,
     use_class_weight=False,
     random_state=4126):
     if out_dir is not None:
@@ -81,14 +80,20 @@ def train(
     } if use_class_weight else None
 
     resampler = None
-    resample_method = None
-    if smote:
+    if resampling_method == 'SMOTE':
         resampler = SMOTE(random_state=random_state)
-        resample_method = 'SMOTE'
-    elif under_sampleng:
+    elif resampling_method == 'RandomUnderSampler':
         resampler = RandomUnderSampler(random_state=random_state)
-        resample_method = 'Under Sampling'
+    elif resampling_method == 'ClusterCentroids':
+        resampler = ClusterCentroids(random_state=random_state, n_jobs=4)
+    elif resampling_method == 'NearMiss':
+        resampler = NearMiss(random_state=random_state, n_jobs=4)
+    elif resampling_method == 'TomekLinks':
+        resampler = TomekLinks(random_state=random_state, n_jobs=4)
+    elif resampling_method == 'CondensedNearestNeighbour':
+        resampler = CondensedNearestNeighbour(random_state=random_state, n_jobs=4)
     if resampler is not None:
+        print('performing {}...'.format(resampling_method))
         X_train_resample, y_train = resampler.fit_sample(X_train.reshape(X_train.shape[0], -1), y_train)
         X_train = X_train_resample.reshape(\
             X_train_resample.shape[0], \
@@ -99,7 +104,7 @@ def train(
         positive = (0.5 <= y_train).sum()
         negative = (y_train < 0.5).sum()
         print('{} performed train data balance P:{} : N:{}'.format(
-            resample_method, positive, negative))
+            resampling_method, positive, negative))
 
     model.fit(X_train, y_train, \
         epochs=epochs, callbacks=callbacks, \
@@ -181,6 +186,7 @@ def _output(out_dir, X_test, y_test, info_test, model_path):
                 'time': eq['time'].strftime(date_format),
                 'latitude': eq['latitude'],
                 'longitude': eq['longitude'],
+                'depth': eq['depth'],
                 'mag': eq['mag']
             })
         _dump(detail, os.path.join(out_dir, detail_path))

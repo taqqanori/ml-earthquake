@@ -18,8 +18,7 @@
             "learning_rate": 5e-6,
             "epochs": 50,
             "dropout": 0.3,
-            "smote": false,
-            "under_sampling": true
+            "resampling_method": "RandomUnderSampler"
         },
         {
             "id": "niigata",
@@ -38,9 +37,8 @@
             "test_ratio": 0.25,
             "learning_rate": 5e-6,
             "epochs": 50,
-            "dropout": 0.5,
-            "smote": false,
-            "under_sampling": true
+            "dropout": 0.3,
+            "resampling_method": "CondensedNearestNeighbour"
         }
     ]
 }

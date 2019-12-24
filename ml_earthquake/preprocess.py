@@ -109,8 +109,8 @@ def preprocess(
             x[lat_index, lng_index, 2] = avg * ((count - 1) / count) + (row['depth'] / count)
 
             # y
-            d = _distance(row['latitude'], row['longitude'], predict_center_lat, predict_center_lng)
-            if d <= predict_radius_meters:
+            distance = _distance(row['latitude'], row['longitude'], predict_center_lat, predict_center_lng)
+            if distance <= predict_radius_meters:
                 if threshold_mag <= row['mag']:
                     _y = True
                     # info
@@ -118,6 +118,7 @@ def preprocess(
                         'time': d,
                         'latitude': row['latitude'],
                         'longitude': row['longitude'],
+                        'depth': row['depth'],
                         'mag': row['mag']
                     })
 

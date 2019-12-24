@@ -67,8 +67,7 @@ def main(
                 epochs=r['epochs'],
                 dropout=r['dropout'],
                 random_state=random_seed,
-                smote=r['smote'],
-                under_sampleng=r['under_sampling']
+                resampling_method=r['resampling_method'] if 'resampling_method' in r else None
             )
 
 if __name__ == '__main__':
