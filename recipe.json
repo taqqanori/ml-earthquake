@@ -38,10 +38,11 @@
             "threshold_mag": 3.0,
             "test_ratio": 0.25,
             "learning_rate": 5e-6,
-            "decay": 1e-2,
             "epochs": 50,
-            "dropout": 0.8,
-            "balanced_batch": true
+            "dropout": 0.3,
+            "resampling_methods": [
+                "SMOTE"
+            ]
         }
     ]
 }
