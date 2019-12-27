@@ -64,10 +64,13 @@ def main(
                 info_test=info_test,
                 out_dir=os.path.join(out_dir, r['id']),
                 log_dir=log_dir,
+                learning_rate=r['learning_rate'] if 'learning_rate' in r else 5e-6,
+                decay=r['decay'] if 'decay' in r else 0.0,
                 epochs=r['epochs'],
                 dropout=r['dropout'],
                 random_state=random_seed,
-                resampling_method=r['resampling_method'] if 'resampling_method' in r else None
+                resampling_methods=r['resampling_methods'] if 'resampling_methods' in r else None,
+                balanced_batch=r['balanced_batch'] if 'balanced_batch' in r else None
             )
 
 if __name__ == '__main__':

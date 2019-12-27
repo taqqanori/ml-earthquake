@@ -13,7 +13,17 @@ from keras.layers.core import Dense, Activation, Dropout, Flatten
 from keras.callbacks import TensorBoard, ModelCheckpoint
 from datetime import datetime
 from imblearn.over_sampling import SMOTE
-from imblearn.under_sampling import RandomUnderSampler, ClusterCentroids, NearMiss, TomekLinks, CondensedNearestNeighbour
+from imblearn.under_sampling import (
+    RandomUnderSampler,
+    ClusterCentroids,
+    NearMiss,
+    TomekLinks,
+    CondensedNearestNeighbour,
+    EditedNearestNeighbours,
+    AllKNN,
+    NeighbourhoodCleaningRule,
+)
+from imblearn.keras import BalancedBatchGenerator
 
 date_format = '%Y%m%d'
 
@@ -26,10 +36,12 @@ def train(
     out_dir=None,
     model_file_name='best_model.h5',
     learning_rate=5e-6,
+    decay=0.0,
     epochs=100,
     dropout=0.3,
     log_dir=None,
-    resampling_method=None,
+    resampling_methods=None,
+    balanced_batch=None,
     use_class_weight=False,
     random_state=4126):
     if out_dir is not None:
@@ -54,7 +66,7 @@ def train(
 
     model.add(Dense(1, activation='sigmoid'))
 
-    adam = Adam(lr=learning_rate)
+    adam = Adam(lr=learning_rate, decay=decay)
     model.compile(optimizer=adam, loss='binary_crossentropy', metrics=["accuracy"])
     model.summary()
 
@@ -79,37 +91,24 @@ def train(
         1: negative / (positive + negative),
     } if use_class_weight else None
 
-    resampler = None
-    if resampling_method == 'SMOTE':
-        resampler = SMOTE(random_state=random_state)
-    elif resampling_method == 'RandomUnderSampler':
-        resampler = RandomUnderSampler(random_state=random_state)
-    elif resampling_method == 'ClusterCentroids':
-        resampler = ClusterCentroids(random_state=random_state, n_jobs=4)
-    elif resampling_method == 'NearMiss':
-        resampler = NearMiss(random_state=random_state, n_jobs=4)
-    elif resampling_method == 'TomekLinks':
-        resampler = TomekLinks(random_state=random_state, n_jobs=4)
-    elif resampling_method == 'CondensedNearestNeighbour':
-        resampler = CondensedNearestNeighbour(random_state=random_state, n_jobs=4)
-    if resampler is not None:
-        print('performing {}...'.format(resampling_method))
-        X_train_resample, y_train = resampler.fit_sample(X_train.reshape(X_train.shape[0], -1), y_train)
-        X_train = X_train_resample.reshape(\
-            X_train_resample.shape[0], \
-            X_train.shape[1], \
-            X_train.shape[2], \
-            X_train.shape[3], \
-            X_train.shape[4])
-        positive = (0.5 <= y_train).sum()
-        negative = (y_train < 0.5).sum()
-        print('{} performed train data balance P:{} : N:{}'.format(
-            resampling_method, positive, negative))
+    if resampling_methods is not None:
+        for resampling_method in resampling_methods:
+            X_train, y_train = _resample(X_train, y_train, resampling_method, random_state)
 
-    model.fit(X_train, y_train, \
-        epochs=epochs, callbacks=callbacks, \
-        validation_data=(X_test, y_test),
-        class_weight=class_weight)
+    if balanced_batch == True:
+        print('using BalancedBatchGenerator')
+        batch_gen = BalancedBatchGenerator(\
+            X_train, y_train, \
+            sampler=RandomUnderSamplerWrapper(), random_state=random_state)
+        model.fit_generator(generator=batch_gen, \
+            epochs=epochs, callbacks=callbacks, \
+            validation_data=(X_test, y_test),
+            class_weight=class_weight)
+    else:
+        model.fit(X_train, y_train, \
+            epochs=epochs, callbacks=callbacks, \
+            validation_data=(X_test, y_test),
+            class_weight=class_weight)
     
     if out_dir is not None and info_test is not None:
         _output(out_dir, X_test, y_test, info_test, model_path)
@@ -191,6 +190,56 @@ def _output(out_dir, X_test, y_test, info_test, model_path):
             })
         _dump(detail, os.path.join(out_dir, detail_path))
     _dump(predictions, os.path.join(out_dir, 'predictions.json'))
+
+def _resample(X_train, y_train, resampling_method, random_state):
+    resampler = _get_resampler(resampling_method, random_state)
+    print('performing {}...'.format(resampling_method))
+    X_train_resample, y_train = resampler.fit_sample(X_train.reshape(X_train.shape[0], -1), y_train)
+    X_train = X_train_resample.reshape(\
+        X_train_resample.shape[0], \
+        X_train.shape[1], \
+        X_train.shape[2], \
+        X_train.shape[3], \
+        X_train.shape[4])
+    positive = (0.5 <= y_train).sum()
+    negative = (y_train < 0.5).sum()
+    print('{} performed train data balance P:{} : N:{}'.format(
+        resampling_method, positive, negative))
+    return X_train, y_train
+
+def _get_resampler(name, random_state, n_jobs=8):
+    if name == 'SMOTE':
+        return SMOTE(random_state=random_state)
+    elif name == 'RandomUnderSampler':
+        return RandomUnderSampler(random_state=random_state)
+    elif name == 'ClusterCentroids':
+        return ClusterCentroids(random_state=random_state, n_jobs=n_jobs)
+    elif name == 'NearMiss':
+        return NearMiss(random_state=random_state, n_jobs=n_jobs)
+    elif name == 'TomekLinks':
+        return TomekLinks(random_state=random_state, n_jobs=n_jobs)
+    elif name == 'CondensedNearestNeighbour':
+        return CondensedNearestNeighbour(random_state=random_state, n_jobs=n_jobs)
+    elif name == 'EditedNearestNeighbours':
+        return EditedNearestNeighbours(random_state=random_state, n_jobs=n_jobs)
+    elif name == 'AllKNN':
+        return AllKNN(random_state=random_state, n_jobs=n_jobs)
+    elif name == 'NeighbourhoodCleaningRule':
+        return NeighbourhoodCleaningRule(random_state=random_state, n_jobs=n_jobs)
+    else:
+        raise Exception('unknown resampler: {}'.format(name))
+
+class RandomUnderSamplerWrapper(RandomUnderSampler):
+
+    def fit_resample(self, X, y):
+        X_resample, y = super().fit_sample(X.reshape(X.shape[0], -1), y)
+        X = X_resample.reshape(\
+            X_resample.shape[0], \
+            X.shape[1], \
+            X.shape[2], \
+            X.shape[3], \
+            X.shape[4])
+        return X, y
 
 def _dump(o, path):
     with open(path, 'w') as f:
