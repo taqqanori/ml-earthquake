@@ -19,7 +19,9 @@
             "epochs": 50,
             "dropout": 0.3,
             "resampling_methods": [
-                "RandomUnderSampler"
+                {
+                    "name": "RandomUnderSampler"
+                }
             ]
         },
         {
@@ -41,7 +43,15 @@
             "epochs": 50,
             "dropout": 0.3,
             "resampling_methods": [
-                "SMOTE"
+                {
+                    "name": "RandomUnderSampler",
+                    "args": {
+                        "sampling_strategy": 0.1
+                    }
+                },
+                {
+                    "name": "SMOTE"
+                }
             ]
         }
     ]

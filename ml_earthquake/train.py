@@ -193,7 +193,7 @@ def _output(out_dir, X_test, y_test, info_test, model_path):
 
 def _resample(X_train, y_train, resampling_method, random_state):
     resampler = _get_resampler(resampling_method, random_state)
-    print('performing {}...'.format(resampling_method))
+    print('performing {}...'.format(resampling_method['name']))
     X_train_resample, y_train = resampler.fit_sample(X_train.reshape(X_train.shape[0], -1), y_train)
     X_train = X_train_resample.reshape(\
         X_train_resample.shape[0], \
@@ -204,30 +204,40 @@ def _resample(X_train, y_train, resampling_method, random_state):
     positive = (0.5 <= y_train).sum()
     negative = (y_train < 0.5).sum()
     print('{} performed train data balance P:{} : N:{}'.format(
-        resampling_method, positive, negative))
+        resampling_method['name'], positive, negative))
     return X_train, y_train
 
-def _get_resampler(name, random_state, n_jobs=8):
-    if name == 'SMOTE':
-        return SMOTE(random_state=random_state)
-    elif name == 'RandomUnderSampler':
-        return RandomUnderSampler(random_state=random_state)
-    elif name == 'ClusterCentroids':
-        return ClusterCentroids(random_state=random_state, n_jobs=n_jobs)
-    elif name == 'NearMiss':
-        return NearMiss(random_state=random_state, n_jobs=n_jobs)
-    elif name == 'TomekLinks':
-        return TomekLinks(random_state=random_state, n_jobs=n_jobs)
-    elif name == 'CondensedNearestNeighbour':
-        return CondensedNearestNeighbour(random_state=random_state, n_jobs=n_jobs)
-    elif name == 'EditedNearestNeighbours':
-        return EditedNearestNeighbours(random_state=random_state, n_jobs=n_jobs)
-    elif name == 'AllKNN':
-        return AllKNN(random_state=random_state, n_jobs=n_jobs)
-    elif name == 'NeighbourhoodCleaningRule':
-        return NeighbourhoodCleaningRule(random_state=random_state, n_jobs=n_jobs)
+def _get_resampler(method, random_state, n_jobs=8):
+    args = {
+        'random_state': random_state,
+        'n_jobs': n_jobs
+    }
+    if 'args' in method:
+        args = {
+            **args,
+            **method['args']
+        }
+    if method['name'] == 'SMOTE':
+        return SMOTE(**args)
+    elif method['name'] == 'RandomUnderSampler':
+        del args['n_jobs']
+        return RandomUnderSampler(**args) # pylint: disable=unexpected-keyword-arg
+    elif method['name'] == 'ClusterCentroids':
+        return ClusterCentroids(**args)
+    elif method['name'] == 'NearMiss':
+        return NearMiss(**args)
+    elif method['name'] == 'TomekLinks':
+        return TomekLinks(**args)
+    elif method['name'] == 'CondensedNearestNeighbour':
+        return CondensedNearestNeighbour(**args)
+    elif method['name'] == 'EditedNearestNeighbours':
+        return EditedNearestNeighbours(**args)
+    elif method['name'] == 'AllKNN':
+        return AllKNN(**args)
+    elif method['name'] == 'NeighbourhoodCleaningRule':
+        return NeighbourhoodCleaningRule(**args)
     else:
-        raise Exception('unknown resampler: {}'.format(name))
+        raise Exception('unknown resampler: {}'.format(method['name']))
 
 class RandomUnderSamplerWrapper(RandomUnderSampler):
 
