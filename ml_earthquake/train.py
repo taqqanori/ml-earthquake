@@ -257,14 +257,22 @@ def _dump(o, path):
 
 class _Reporter(Callback):
 
-    def __init__(self, X_test, y_test):
+    def __init__(self, X_test, y_test, monitor='val_loss', best_only=True):
         self.X_test = X_test
         self.y_test = y_test
+        self.monitor = monitor
+        self.best_only = best_only
+        self.best = np.inf
 
     def on_epoch_end(self, epoch, logs={}):
+        if self.best_only:
+            score = logs.get(self.monitor)
+            if self.best < score:
+                return
+            self.best = score
         acc, auc, f1, precision, recall, tp, fn, fp, tn = _eval(self.model, self.X_test, self.y_test)
-        print('\nAUC: {:.3f}, F1: {:.3f}, acc: {:.3f}, precision: {:.3f}, recall: {:.3f}, TP: {}, FN: {}, FP: {}, TN: {}'.format(\
-            auc, f1, acc, precision, recall, tp, fn, fp, tn
+        print('Epoch {}: AUC: {:.3f}, F1: {:.3f}, acc: {:.3f}, precision: {:.3f}, recall: {:.3f}, TP: {}, FN: {}, FP: {}, TN: {}'.format(\
+            epoch + 1, auc, f1, acc, precision, recall, tp, fn, fp, tn
         ))
 
 def _eval(model, X_test, y_test):

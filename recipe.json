@@ -46,7 +46,7 @@
                 {
                     "name": "RandomUnderSampler",
                     "args": {
-                        "sampling_strategy": 0.1
+                        "sampling_strategy": 0.25
                     }
                 },
                 {
