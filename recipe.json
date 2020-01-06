@@ -101,6 +101,36 @@
                     "name": "RandomUnderSampler"
                 }
             ]
+        },
+        {
+            "id": "sendai",
+            "displayName": {
+                "ja": "仙台",
+                "en": "Sendai"
+            },
+            "window_days": 15,
+            "predict_range_days": 1,
+            "lat_granularity": 20,
+            "lng_granularity": 30,
+            "predict_center_lat": 38.268375,
+            "predict_center_lng": 140.872535,
+            "predict_radius_meters": 150000,
+            "threshold_mag": 4.0,
+            "test_ratio": 0.25,
+            "learning_rate": 5e-6,
+            "epochs": 50,
+            "dropout": 0.3,
+            "resampling_methods": [
+                {
+                    "name": "RandomUnderSampler",
+                    "args": {
+                        "sampling_strategy": 0.25
+                    }
+                },
+                {
+                    "name": "SMOTE"
+                }
+            ]
         }
     ]
 }
