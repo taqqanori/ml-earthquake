@@ -124,7 +124,7 @@
                 {
                     "name": "RandomUnderSampler",
                     "args": {
-                        "sampling_strategy": 0.25
+                        "sampling_strategy": 0.3
                     }
                 },
                 {
