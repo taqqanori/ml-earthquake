@@ -1,12 +1,12 @@
-
-import os, fire, json
-from ml_earthquake import collect_data
-from ml_earthquake import preprocess
-from ml_earthquake import train
+import os, fire, json, sys
 import numpy as np
 import random as rn
 import tensorflow as tf
-from http.server import SimpleHTTPRequestHandler, HTTPServer
+
+sys.path.append(os.getcwd())
+from ml_earthquake import collect_data
+from ml_earthquake import preprocess
+from ml_earthquake import train
 
 def set_random_seed(s):
     os.environ['PYTHONHASHSEED'] = '0'
@@ -28,18 +28,12 @@ def main(
     out_dir='out',
     work_dir='work',
     log_dir='log',
-    random_seed=4126,
-    server=False,
-    port=8080):
+    random_seed=4126):
+
+    set_random_seed(random_seed)
 
     if not os.path.exists(recipe):
         raise Exception('recipe: {} does not exists...'.format(recipe))
-
-    if server:
-        _serve(port, recipe, out_dir)
-        return
-
-    set_random_seed(random_seed)
 
     data_path = os.path.join(
         data_dir,
@@ -80,25 +74,6 @@ def main(
                 resampling_methods=r['resampling_methods'] if 'resampling_methods' in r else None,
                 balanced_batch=r['balanced_batch'] if 'balanced_batch' in r else None
             )
-
-class _RecipeAndLOutHandler(SimpleHTTPRequestHandler):
-    def __init__(self, recipe, out_dir, *args):
-        self.recipe = recipe
-        super().__init__(*args, directory=out_dir)
-
-    def translate_path(self, path):
-        if path == '/recipe.json':
-            return self.recipe
-        return super().translate_path(path)
-
-    def end_headers(self):
-        self.send_header('Access-Control-Allow-Origin','*')
-        super().end_headers()
-
-def _serve(port, recipe, out_dir):
-    print('starting server at port {} with recipe {} and output files in {}'.format(port, recipe, out_dir))
-    server = HTTPServer(('', port), lambda *args: _RecipeAndLOutHandler(recipe, out_dir, *args))
-    server.serve_forever()
 
 if __name__ == '__main__':
     fire.Fire(main)

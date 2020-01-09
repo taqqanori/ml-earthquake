@@ -15,6 +15,7 @@ def preprocess(
     predict_center_lng,
     predict_radius_meters,
     threshold_mag,
+    for_prediction=False,
     test_ratio=0.25,
     cache_dir=None,
     show_progress=True,
@@ -42,18 +43,18 @@ def preprocess(
         )
         cache_y_path = os.path.join(cache_dir, 'y_{}.npy'.format(y_info_id))
         cache_info_path = os.path.join(cache_dir, 'info_{}.pickle'.format(y_info_id))
+    
+        if os.path.exists(cache_X_path) and \
+        os.path.exists(cache_y_path) and \
+        os.path.exists(cache_info_path):
+            X = np.load(cache_X_path)
+            y = np.load(cache_y_path)
+            with open(cache_info_path, 'rb') as f:
+                info = pickle.load(f)
+            return _train_test_split(X, y, info, window_days, predict_range_days, test_ratio)
 
     lat_gap = 180 / lat_granularity
     lng_gap = 360 / lng_granularity
-    
-    if os.path.exists(cache_X_path) and \
-       os.path.exists(cache_y_path) and \
-       os.path.exists(cache_info_path):
-        X = np.load(cache_X_path)
-        y = np.load(cache_y_path)
-        with open(cache_info_path, 'rb') as f:
-            info = pickle.load(f)
-        return _train_test_split(X, y, info, window_days, predict_range_days, test_ratio)
     
     X = []
     y = []
@@ -76,7 +77,8 @@ def preprocess(
         if date is None:
             # first line
             date = _midnight(df.index.min())
-            progress = tqdm(total=int((datetime.now(date.tzinfo) - date) // timedelta(days=1)))
+            if show_progress:
+                progress = tqdm(total=int((datetime.now(date.tzinfo) - date) // timedelta(days=1)))
             x = np.zeros([lat_granularity, lng_granularity, 3])
             _y = False
             eq = []
@@ -85,7 +87,8 @@ def preprocess(
             if date.day != d.day:
                 # came to next (or later) day
                 date += timedelta(days=1)
-                progress.update()
+                if show_progress:
+                    progress.update()
                 _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, window_days, predict_range_days, threshold_mag)
                 x = np.zeros([lat_granularity, lng_granularity, 3])
                 _y = False
@@ -94,7 +97,8 @@ def preprocess(
                     # blank days
                     _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, window_days, predict_range_days, threshold_mag)
                     date += timedelta(days=1)
-                    progress.update()
+                    if show_progress:
+                        progress.update()
                 
             # x
             lat_index = min(int((row['latitude'] - (-90)) // lat_gap), lat_granularity - 1)
@@ -122,12 +126,22 @@ def preprocess(
                         'mag': row['mag']
                     })
 
+    # the last day
+    _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, window_days, predict_range_days, threshold_mag)
+
+    if for_prediction:
+        X.append(np.array(X_buf[0:window_days]))
+
     X = np.array(X)
     # normalize
     for i in range(0, X.shape[-1]):
         _max = X[:,:,:,:,i].max()
         _min = X[:,:,:,:,i].min()
         X[:,:,:,:,i] = (X[:,:,:,:,i] - _min) / (_max - _min) 
+
+    if for_prediction:
+        return X
+
     np.save(cache_X_path, X)
         
     y = np.array(y)
