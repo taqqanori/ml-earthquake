@@ -131,6 +131,30 @@
                     "name": "SMOTE"
                 }
             ]
+        },
+        {
+            "id": "nagoya",
+            "displayName": {
+                "ja": "名古屋",
+                "en": "Nagoya"
+            },
+            "window_days": 15,
+            "predict_range_days": 1,
+            "lat_granularity": 20,
+            "lng_granularity": 30,
+            "predict_center_lat": 35.179420,
+            "predict_center_lng": 136.906471,
+            "predict_radius_meters": 250000,
+            "threshold_mag": 4.0,
+            "test_ratio": 0.25,
+            "learning_rate": 5e-6,
+            "epochs": 50,
+            "dropout": 0.3,
+            "resampling_methods": [
+                {
+                    "name": "RandomUnderSampler"
+                }
+            ]
         }
     ]
 }
