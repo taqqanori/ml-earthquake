@@ -154,18 +154,21 @@ def _output(out_dir, X_test, y_test, info_test, model_path):
         detail = {
             'mag_heatmaps': [],
             'freq_heatmaps': [],
-            'lat_gap': 180 / X_test[i].shape[0],
-            'lng_gap': 360 / X_test[i].shape[1],
+            'depth_heatmaps': [],
+            'lat_gap': 180 / X_test[i].shape[1],
+            'lng_gap': 360 / X_test[i].shape[2],
             'threshold_mag': info_test[i]['threshold_mag'],
             'earthquakes': []
         }
         for win in range(X_test[i].shape[0]):
             mag_heatmap = []
             freq_heatmap = []
+            depth_heatmap = []
             for lat in range(X_test[i].shape[1]):
                 for lng in range(X_test[i].shape[2]):
                     mag = X_test[i][win][lat][lng][0]
                     freq = X_test[i][win][lat][lng][1]
+                    depth = X_test[i][win][lat][lng][2]
                     if 0 < mag:
                         mag_heatmap.append({
                             'lat': lat,
@@ -178,8 +181,15 @@ def _output(out_dir, X_test, y_test, info_test, model_path):
                             'lng': lng,
                             'heat': freq
                         })
+                    if 0 < depth:
+                        depth_heatmap.append({
+                            'lat': lat,
+                            'lng': lng,
+                            'heat': depth
+                        })
             detail['mag_heatmaps'].append(mag_heatmap)
             detail['freq_heatmaps'].append(freq_heatmap)
+            detail['depth_heatmaps'].append(depth_heatmap)
         for eq in info_test[i]['earthquakes']:
             detail['earthquakes'].append({
                 'time': eq['time'].strftime(date_format),
