@@ -179,6 +179,30 @@
                     "name": "RandomUnderSampler"
                 }
             ]
+        },
+        {
+            "id": "fukuoka",
+            "displayName": {
+                "ja": "福岡",
+                "en": "Fukuoka"
+            },
+            "window_days": 15,
+            "predict_range_days": 1,
+            "lat_granularity": 20,
+            "lng_granularity": 30,
+            "predict_center_lat": 33.605755,
+            "predict_center_lng": 130.418357,
+            "predict_radius_meters": 350000,
+            "threshold_mag": 4.0,
+            "test_ratio": 0.25,
+            "learning_rate": 5e-6,
+            "epochs": 50,
+            "dropout": 0.3,
+            "resampling_methods": [
+                {
+                    "name": "RandomUnderSampler"
+                }
+            ]
         }
     ]
 }
