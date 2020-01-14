@@ -72,6 +72,9 @@ def main(\
                 out['predictions'].append({
                     'id': r['id'],
                     'start_date': predict_start,
+                    'predict_center_lat': r['predict_center_lat'],
+                    'predict_center_lng': r['predict_center_lng'],
+                    'predict_radius_meters': r['predict_radius_meters'],
                     'predict_range_days': r['predict_range_days'],
                     'probability': float(y),
                     'displayName': r['displayName'],
