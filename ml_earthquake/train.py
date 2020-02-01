@@ -131,8 +131,8 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
         'tn': int(tn),
         'train_start_date': info_train[0]['window_start'].strftime(date_format),
         'train_end_date': info_train[-1]['predict_end'].strftime(date_format),
-        'test_start_date': info_train[0]['window_start'].strftime(date_format),
-        'test_end_date': info_train[-1]['predict_end'].strftime(date_format),
+        'test_start_date': info_test[0]['window_start'].strftime(date_format),
+        'test_end_date': info_test[-1]['predict_end'].strftime(date_format),
     }
     _dump(summary, os.path.join(out_dir, 'summary.json'))
 
