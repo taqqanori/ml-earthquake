@@ -32,6 +32,7 @@ def train(
     y_train,
     X_test,
     y_test,
+    info_train=None,
     info_test=None,
     out_dir=None,
     model_file_name='best_model.h5',
@@ -110,10 +111,10 @@ def train(
             validation_data=(X_test, y_test),
             class_weight=class_weight)
     
-    if out_dir is not None and info_test is not None:
-        _output(out_dir, X_test, y_test, info_test, model_path)
+    if out_dir is not None and info_train is not None and info_test is not None:
+        _output(out_dir, X_test, y_test, info_train, info_test, model_path)
     
-def _output(out_dir, X_test, y_test, info_test, model_path):
+def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
     best_model = load_model(model_path)
     acc, auc, f1, precision, recall, tp, fn, fp, tn = _eval(best_model, X_test, y_test)
 
@@ -128,6 +129,10 @@ def _output(out_dir, X_test, y_test, info_test, model_path):
         'fn': int(fn),
         'fp': int(fp),
         'tn': int(tn),
+        'train_start_date': info_train[0]['window_start'].strftime(date_format),
+        'train_end_date': info_train[-1]['predict_end'].strftime(date_format),
+        'test_start_date': info_train[0]['window_start'].strftime(date_format),
+        'test_end_date': info_train[-1]['predict_end'].strftime(date_format),
     }
     _dump(summary, os.path.join(out_dir, 'summary.json'))
 

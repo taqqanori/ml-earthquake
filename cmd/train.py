@@ -48,7 +48,7 @@ def main(
             if recipe_id is not None and recipe_id != r['id']:
                 continue
             print('start preprocess and train for recipe ID: {}'.format(r['id']))
-            X_train, y_train, X_test, y_test, _, info_test = preprocess(
+            X_train, y_train, X_test, y_test, info_train, info_test = preprocess(
                 data_path,
                 r['window_days'],
                 r['predict_range_days'],
@@ -63,6 +63,7 @@ def main(
             train(
                 X_train, y_train,
                 X_test, y_test,
+                info_train=info_train,
                 info_test=info_test,
                 out_dir=os.path.join(out_dir, r['id']),
                 log_dir=log_dir,
