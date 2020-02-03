@@ -136,8 +136,8 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
     }
     _dump(summary, os.path.join(out_dir, 'summary.json'))
 
-    # predictions
-    predictions = []
+    # validations
+    validations = []
     y_pred = best_model.predict(X_test).reshape(-1)
     for i in range(0, len(y_test)):
         window_start = info_test[i]['window_start'].strftime(date_format)
@@ -145,7 +145,7 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
         predict_start = info_test[i]['predict_start'].strftime(date_format)
         predict_end = info_test[i]['predict_end'].strftime(date_format)
         detail_path = 'detail_{}_{}.json'.format(predict_start, predict_end)
-        predictions.append({
+        validation = {
             'window_start': window_start,
             'window_end': window_end,
             'predict_start': predict_start,
@@ -153,7 +153,8 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
             'prediction': float(y_pred[i]),
             'fact': float(y_test[i]),
             'detail': detail_path
-        })
+        }
+        validations.append(validation)
 
         # detail
         detail = {
@@ -195,6 +196,7 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
             detail['mag_heatmaps'].append(mag_heatmap)
             detail['freq_heatmaps'].append(freq_heatmap)
             detail['depth_heatmaps'].append(depth_heatmap)
+        max_mag = 0
         for eq in info_test[i]['earthquakes']:
             detail['earthquakes'].append({
                 'time': eq['time'].strftime(date_format),
@@ -203,8 +205,11 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
                 'depth': eq['depth'],
                 'mag': eq['mag']
             })
+            if max_mag < eq['mag']:
+                max_mag = eq['mag']
+        validation['max_mag'] = max_mag
         _dump(detail, os.path.join(out_dir, detail_path))
-    _dump(predictions, os.path.join(out_dir, 'predictions.json'))
+    _dump(validations, os.path.join(out_dir, 'validations.json'))
 
 def _resample(X_train, y_train, resampling_method, random_state):
     resampler = _get_resampler(resampling_method, random_state)
