@@ -209,7 +209,7 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
                 max_mag = eq['mag']
         validation['max_mag'] = max_mag
         _dump(detail, os.path.join(out_dir, detail_path))
-    _dump(validations, os.path.join(out_dir, 'validations.json'))
+    _dump({ 'validations': validations }, os.path.join(out_dir, 'validations.json'))
 
 def _resample(X_train, y_train, resampling_method, random_state):
     resampler = _get_resampler(resampling_method, random_state)
