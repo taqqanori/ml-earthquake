@@ -199,7 +199,7 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
         max_mag = 0
         for eq in info_test[i]['earthquakes']:
             detail['earthquakes'].append({
-                'time': eq['time'].strftime(date_format),
+                'time': eq['time'].strftime(date_format + '%H%M%S'),
                 'latitude': eq['latitude'],
                 'longitude': eq['longitude'],
                 'depth': eq['depth'],
