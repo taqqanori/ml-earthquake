@@ -158,6 +158,10 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
 
         # detail
         detail = {
+            'window_start': window_start,
+            'window_end': window_end,
+            'predict_start': predict_start,
+            'predict_end': predict_end,
             'mag_heatmaps': [],
             'freq_heatmaps': [],
             'depth_heatmaps': [],
