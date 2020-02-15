@@ -29,7 +29,7 @@ def collect_data(out_path, start_time='1980-01-01 00:00:00', end_time=None, min_
             end_offset = min(start_offset + (step_days // subdivide), step_days)
             url = url_base.format(\
                 (t + timedelta(days=start_offset)).strftime(f).replace(" ", "%20"), \
-                (t + timedelta(days=end_offset)).strftime(f).replace(" ", "%20"), \
+                (t + timedelta(days=end_offset) - timedelta(seconds=1)).strftime(f).replace(" ", "%20"), \
                 min_mag)
             try:
                 step_df = _concat(step_df, pd.read_csv(url, parse_dates=['time']))
