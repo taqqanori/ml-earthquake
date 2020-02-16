@@ -89,13 +89,15 @@ def preprocess(
                 date += timedelta(days=1)
                 if show_progress:
                     progress.update()
-                _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, window_days, predict_range_days, threshold_mag)
+                _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf,\
+                        predict_center_lat, predict_center_lng, window_days, predict_range_days, threshold_mag)
                 x = np.zeros([lat_granularity, lng_granularity, 3])
                 _y = False
                 eq = []
                 for i in range(int((_midnight(d) - _midnight(date)) // timedelta(days=1))):
                     # blank days
-                    _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, window_days, predict_range_days, threshold_mag)
+                    _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf,\
+                        predict_center_lat, predict_center_lng, window_days, predict_range_days, threshold_mag)
                     date += timedelta(days=1)
                     if show_progress:
                         progress.update()
@@ -127,7 +129,8 @@ def preprocess(
                     })
 
     # the last day
-    _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, window_days, predict_range_days, threshold_mag)
+    _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, \
+        predict_center_lat, predict_center_lng, window_days, predict_range_days, threshold_mag)
 
     if for_prediction:
         X.append(np.array(X_buf[0:window_days]))
@@ -159,7 +162,13 @@ def _train_test_split(X, y, info, window_days, predict_range_days, test_ratio):
     info = np.array(info)
     return X[train_index], y[train_index], X[test_index], y[test_index], info[train_index], info[test_index]
 
-def _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, window_days, predict_range_days, threshold_mag):
+def _append(
+    date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf,
+    predict_center_lat,
+    predict_center_lng,
+    window_days,
+    predict_range_days,
+    threshold_mag):
     X_buf.append(x)
     y_buf.append(_y)
     eq_buf.append(eq)
@@ -176,6 +185,8 @@ def _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, window_days, pred
     X.append(np.array(X_buf[0:window_days]))
     y.append(any(y_buf))
     info.append({
+        'predict_center_lat': predict_center_lat,
+        'predict_center_lng': predict_center_lng,
         'window_start': date - timedelta(days=window_days + predict_range_days),
         'window_end': date - timedelta(days=predict_range_days),
         'predict_start': date - timedelta(days=predict_range_days),

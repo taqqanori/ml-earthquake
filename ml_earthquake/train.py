@@ -140,6 +140,8 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
     validations = []
     y_pred = best_model.predict(X_test).reshape(-1)
     for i in range(0, len(y_test)):
+        predict_center_lat = float(info_test[i]['predict_center_lat'])
+        predict_center_lng = float(info_test[i]['predict_center_lng'])
         window_start = info_test[i]['window_start'].strftime(date_format)
         window_end = info_test[i]['window_end'].strftime(date_format)
         predict_start = info_test[i]['predict_start'].strftime(date_format)
@@ -158,6 +160,8 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
 
         # detail
         detail = {
+            'predict_center_lat': predict_center_lat,
+            'predict_center_lng': predict_center_lng,
             'window_start': window_start,
             'window_end': window_end,
             'predict_start': predict_start,
