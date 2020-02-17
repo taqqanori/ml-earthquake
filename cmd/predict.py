@@ -128,10 +128,10 @@ def main(\
                 detail['depth_heatmaps'].append(depth_heatmap)
             detail_path = 'detail_{}_{}.json'.format(predict_start, predict_end)
             with open(os.path.join(out_dir, r['id'], detail_path), 'w', encoding='utf-8') as d:
-                json.dump(detail, d, ensure_ascii=False, indent=2)
+                json.dump(detail, d, ensure_ascii=False)
     
     with open(os.path.join(out_dir, 'predictions.json'), 'w', encoding='utf-8') as o:
-        json.dump(out, o, ensure_ascii=False, indent=2)
+        json.dump(out, o, ensure_ascii=False)
             
 def _midnight(d):
     return datetime(year=d.year, month=d.month, day=d.day, tzinfo=d.tzinfo)

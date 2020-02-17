@@ -15,6 +15,9 @@ def preprocess(
     predict_center_lng,
     predict_radius_meters,
     threshold_mag,
+    normalize_max_mag=10.0,
+    normalize_max_freq=1000,
+    normalize_max_depth=500,
     for_prediction=False,
     test_ratio=0.25,
     cache_dir=None,
@@ -137,10 +140,13 @@ def preprocess(
 
     X = np.array(X)
     # normalize
+    maxes = [
+        normalize_max_mag,
+        normalize_max_freq,
+        normalize_max_depth
+    ]
     for i in range(0, X.shape[-1]):
-        _max = X[:,:,:,:,i].max()
-        _min = X[:,:,:,:,i].min()
-        X[:,:,:,:,i] = (X[:,:,:,:,i] - _min) / (_max - _min) 
+        X[:,:,:,:,i] = np.clip(X[:,:,:,:,i] / maxes[i], 0, 1.0)
 
     if for_prediction:
         return X

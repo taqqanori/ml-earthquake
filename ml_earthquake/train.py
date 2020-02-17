@@ -71,7 +71,8 @@ def train(
     model.compile(optimizer=adam, loss='binary_crossentropy', metrics=["accuracy"])
     model.summary()
 
-    callbacks = [_Reporter(X_test, y_test)]
+    reporter = _Reporter(X_test, y_test)
+    callbacks = [reporter]
 
     model_path = None
     if out_dir is not None:
@@ -112,9 +113,9 @@ def train(
             class_weight=class_weight)
     
     if out_dir is not None and info_train is not None and info_test is not None:
-        _output(out_dir, X_test, y_test, info_train, info_test, model_path)
+        _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter)
     
-def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
+def _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter):
     best_model = load_model(model_path)
     acc, auc, f1, precision, recall, tp, fn, fp, tn = _eval(best_model, X_test, y_test)
 
@@ -129,6 +130,10 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path):
         'fn': int(fn),
         'fp': int(fp),
         'tn': int(tn),
+        'train_acc': reporter.acc,
+        'train_val_acc': reporter.val_acc,
+        'loss': reporter.loss,
+        'val_loss': reporter.val_loss,
         'train_start_date': info_train[0]['window_start'].strftime(date_format),
         'train_end_date': info_train[-1]['predict_end'].strftime(date_format),
         'test_start_date': info_test[0]['window_start'].strftime(date_format),
@@ -281,7 +286,7 @@ class RandomUnderSamplerWrapper(RandomUnderSampler):
 
 def _dump(o, path):
     with open(path, 'w') as f:
-        json.dump(o, f, indent=2)
+        json.dump(o, f)
 
 class _Reporter(Callback):
 
@@ -291,8 +296,16 @@ class _Reporter(Callback):
         self.monitor = monitor
         self.best_only = best_only
         self.best = np.inf
+        self.acc = []
+        self.val_acc = []
+        self.loss = []
+        self.val_loss = []
 
     def on_epoch_end(self, epoch, logs={}):
+        self.acc.append(float(logs.get('acc')))
+        self.val_acc.append(float(logs.get('val_acc')))
+        self.loss.append(float(logs.get('loss')))
+        self.val_loss.append(float(logs.get('val_loss')))
         if self.best_only:
             score = logs.get(self.monitor)
             if self.best < score:
