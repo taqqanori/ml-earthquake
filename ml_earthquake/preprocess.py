@@ -16,7 +16,7 @@ def preprocess(
     predict_radius_meters,
     threshold_mag,
     normalize_max_mag=10.0,
-    normalize_max_freq=1000,
+    normalize_max_freq=100,
     normalize_max_depth=500,
     for_prediction=False,
     test_ratio=0.25,
