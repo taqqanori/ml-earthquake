@@ -30,13 +30,13 @@ X.shape = [batch_size, days_range, latitude_granularity, longitude_granularity, 
 
 Input **X** is generated from earthquakes occured on the specified range of days before the prediction target date.  
 Earthquakes of a day are represented by three kinds of heatmaps, **magnitude**, **frequency**, and **depth**, which can be considered as a 2D image of three channels.
-<center>
+<div align="center">
 
 | magnitude | frequency | depth |
 |:---:|:---:|:---:|
 |<img src="img/mag_heatmap.png" width=250>|<img src="img/freq_heatmap.png" width=250>|<img src="img/depth_heatmap.png" width=250>|
 
-</center>
+</div>
 Magnitude values of a cell are summed as energy, and depth is an average value of a cell.
 
 ```
