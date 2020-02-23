@@ -1,0 +1,208 @@
+{
+    "recipe": [
+        {
+            "id": "tokyo",
+            "displayName": {
+                "ja": "東京",
+                "en": "Tokyo"
+            },
+            "window_days": 15,
+            "predict_range_days": 1,
+            "lat_granularity": 20,
+            "lng_granularity": 30,
+            "predict_center_lat": 35.680934,
+            "predict_center_lng": 139.767551,
+            "predict_radius_meters": 150000,
+            "threshold_mag": 4.0,
+            "test_ratio": 0.25,
+            "learning_rate": 5e-6,
+            "epochs": 50,
+            "dropout": 0.3,
+            "resampling_methods": [
+                {
+                    "name": "RandomUnderSampler"
+                }
+            ]
+        },
+        {
+            "id": "niigata",
+            "displayName": {
+                "ja": "新潟",
+                "en": "Niigata"
+            },
+            "window_days": 15,
+            "predict_range_days": 1,
+            "lat_granularity": 20,
+            "lng_granularity": 30,
+            "predict_center_lat": 37.900865,
+            "predict_center_lng": 139.023056,
+            "predict_radius_meters": 150000,
+            "threshold_mag": 3.0,
+            "test_ratio": 0.25,
+            "learning_rate": 5e-6,
+            "epochs": 50,
+            "dropout": 0.3,
+            "resampling_methods": [
+                {
+                    "name": "RandomUnderSampler",
+                    "args": {
+                        "sampling_strategy": 0.25
+                    }
+                },
+                {
+                    "name": "SMOTE"
+                }
+            ]
+        },
+        {
+            "id": "iwaki",
+            "displayName": {
+                "ja": "いわき",
+                "en": "Iwaki"
+            },
+            "window_days": 15,
+            "predict_range_days": 1,
+            "lat_granularity": 20,
+            "lng_granularity": 30,
+            "predict_center_lat": 37.049971,
+            "predict_center_lng": 140.887985,
+            "predict_radius_meters": 150000,
+            "threshold_mag": 4.0,
+            "test_ratio": 0.25,
+            "learning_rate": 5e-6,
+            "epochs": 50,
+            "dropout": 0.3,
+            "resampling_methods": [
+                {
+                    "name": "RandomUnderSampler"
+                }
+            ]
+        },
+        {
+            "id": "sapporo",
+            "displayName": {
+                "ja": "札幌",
+                "en": "Sapporo"
+            },
+            "window_days": 15,
+            "predict_range_days": 1,
+            "lat_granularity": 20,
+            "lng_granularity": 30,
+            "predict_center_lat": 43.063871,
+            "predict_center_lng": 141.346664,
+            "predict_radius_meters": 400000,
+            "threshold_mag": 4.0,
+            "test_ratio": 0.25,
+            "learning_rate": 5e-6,
+            "epochs": 50,
+            "dropout": 0.3,
+            "resampling_methods": [
+                {
+                    "name": "RandomUnderSampler"
+                }
+            ]
+        },
+        {
+            "id": "sendai",
+            "displayName": {
+                "ja": "仙台",
+                "en": "Sendai"
+            },
+            "window_days": 15,
+            "predict_range_days": 1,
+            "lat_granularity": 20,
+            "lng_granularity": 30,
+            "predict_center_lat": 38.268375,
+            "predict_center_lng": 140.872535,
+            "predict_radius_meters": 150000,
+            "threshold_mag": 4.0,
+            "test_ratio": 0.25,
+            "learning_rate": 5e-6,
+            "epochs": 50,
+            "dropout": 0.3,
+            "resampling_methods": [
+                {
+                    "name": "RandomUnderSampler",
+                    "args": {
+                        "sampling_strategy": 0.3
+                    }
+                },
+                {
+                    "name": "SMOTE"
+                }
+            ]
+        },
+        {
+            "id": "nagoya",
+            "displayName": {
+                "ja": "名古屋",
+                "en": "Nagoya"
+            },
+            "window_days": 15,
+            "predict_range_days": 1,
+            "lat_granularity": 20,
+            "lng_granularity": 30,
+            "predict_center_lat": 35.179420,
+            "predict_center_lng": 136.906471,
+            "predict_radius_meters": 250000,
+            "threshold_mag": 4.0,
+            "test_ratio": 0.25,
+            "learning_rate": 5e-6,
+            "epochs": 50,
+            "dropout": 0.3,
+            "resampling_methods": [
+                {
+                    "name": "RandomUnderSampler"
+                }
+            ]
+        },
+        {
+            "id": "nankai",
+            "displayName": {
+                "ja": "南海トラフ付近",
+                "en": "Nankai"
+            },
+            "window_days": 15,
+            "predict_range_days": 1,
+            "lat_granularity": 20,
+            "lng_granularity": 30,
+            "predict_center_lat": 32.824211,
+            "predict_center_lng": 135.076904,
+            "predict_radius_meters": 350000,
+            "threshold_mag": 4.0,
+            "test_ratio": 0.25,
+            "learning_rate": 5e-6,
+            "epochs": 50,
+            "dropout": 0.3,
+            "resampling_methods": [
+                {
+                    "name": "RandomUnderSampler"
+                }
+            ]
+        },
+        {
+            "id": "fukuoka",
+            "displayName": {
+                "ja": "福岡",
+                "en": "Fukuoka"
+            },
+            "window_days": 15,
+            "predict_range_days": 1,
+            "lat_granularity": 20,
+            "lng_granularity": 30,
+            "predict_center_lat": 33.605755,
+            "predict_center_lng": 130.418357,
+            "predict_radius_meters": 350000,
+            "threshold_mag": 4.0,
+            "test_ratio": 0.25,
+            "learning_rate": 5e-6,
+            "epochs": 50,
+            "dropout": 0.3,
+            "resampling_methods": [
+                {
+                    "name": "RandomUnderSampler"
+                }
+            ]
+        }
+    ]
+}
