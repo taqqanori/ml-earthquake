@@ -33,9 +33,9 @@ Input **X** is generated from earthquakes occured on the specified range of days
 Earthquakes are represented by **latitude index**, **longitude index**, **magnitude**, **frequency** (on a day), and **depth** (average in the latitude & longitude index).
 Earthquakes of a day can be considered as 3 heatmaps of the world, and also an 2D image of 3 channels.
 <div align="center">
-  <img title="magnitude" src="img/mag_heatmap.png" width=300>
-  <img title="frequency" src="img/freq_heatmap.png" width=300>
-  <img title="depth" src="img/depth_heatmap.png" width=300>
+  <img title="magnitude" src="img/mag_heatmap.png" width=250>
+  <img title="frequency" src="img/freq_heatmap.png" width=250>
+  <img title="depth" src="img/depth_heatmap.png" width=250>
 </div>
 
 ```
