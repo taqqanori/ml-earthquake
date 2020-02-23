@@ -18,9 +18,9 @@ Edit recipe.json (or of course python codes) for your experiment.
 ### Source Data
 All the earthquakes occured after 1980-01-01, recorded in USGS earthquake catalog ([https://earthquake.usgs.gov/earthquakes/search/](https://earthquake.usgs.gov/earthquakes/search/)).  
 Data before 1980 is discarded because they have highly imbalanced frequency compared to later 1980, maybe because of old observation instruments.
-<p>
-  <img src="img/frequency.png" width="300">
-</p>
+<div align="center">
+  <img src="img/frequency.png" width="400">
+</div>
 
 ### Preprocess
 
@@ -32,20 +32,20 @@ Input **X** is generated from earthquakes occured on the specified range of days
 
 Earthquakes are represented by **latitude index**, **longitude index**, **magnitude**, **frequency** (on a day), and **depth** (average in the latitude & longitude index).
 Earthquakes of a day can be considered as 3 heatmaps of the world, and also an 2D image of 3 channels.
-<p>
-  <img title="magnitude" src="img/mag_heatmap.png" width=200>
-  <img title="frequency" src="img/freq_heatmap.png" width=200>
-  <img title="depth" src="img/depth_heatmap.png" width=200>
-</p>
+<div align="center">
+  <img title="magnitude" src="img/mag_heatmap.png" width=300>
+  <img title="frequency" src="img/freq_heatmap.png" width=300>
+  <img title="depth" src="img/depth_heatmap.png" width=300>
+</div>
 
 ```
 y = 1 if earthquake occurs else 0
 ```
 
 y is 1 only when an earthquake greater than specified magnitude occured inside the specified circle area, otherwise 0.
-<p>
-<img title="tokyo" src="img/tokyo.png" width=200>
-</p>
+<div align="center">
+  <img title="tokyo" src="img/tokyo.png" width=300>
+</div>
 
 Generally, positive/negative rate is imbalanced for earthquake data, so resampled by some methods (RandomUnderSampler, SMOTE, etc).
 
