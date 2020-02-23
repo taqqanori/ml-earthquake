@@ -30,28 +30,14 @@ X.shape = [batch_size, days_range, latitude_granularity, longitude_granularity, 
 
 Input **X** is generated from earthquakes occured on the specified range of days before the prediction target date.  
 Earthquakes of a day are represented by three kinds of heatmaps, **magnitude**, **frequency**, and **depth**, which can be considered as a 2D image of three channels.
-<div style="display: flex; flex-direction: row; justify-content: space-around;">
-  <div style="display: flex; flex-direction: column;">
-    <div style="margin: auto;">
-      magnitude
-    </div>
-    <img title="magnitude" src="img/mag_heatmap.png" width=250>
-  </div>
-  <div style="display: flex; flex-direction: column;">
-    <div style="margin: auto;">
-      frequency
-    </div>
-    <img title="frequency" src="img/freq_heatmap.png" width=250>
-  </div>
-  <div style="display: flex; flex-direction: column;">
-    <div style="margin: auto;">
-      depth
-    </div>
-    <img title="depth" src="img/depth_heatmap.png" width=250>
-  </div>
-</div>
+<center>
 
-Magnitudes of a cell is summed as energy, and depth is an average value of a cell.
+| magnitude | frequency | depth |
+|:---:|:---:|:---:|
+|<img src="img/mag_heatmap.png" width=250>|<img src="img/freq_heatmap.png" width=250>|<img src="img/depth_heatmap.png" width=250>|
+
+</center>
+Magnitude values of a cell are summed as energy, and depth is an average value of a cell.
 
 ```
 y = 1 if earthquake occurs else 0
