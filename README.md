@@ -1,5 +1,5 @@
 # ml-earthquake
-Experiment kit for machine learning-based earthquake prediction.
+Experiment kit for machine learning-based earthquake prediction, which may achieve "better than nothing" (ROC-AUC: 0.6~0.7) performance around Japan.
 
 ## Getting Started
 ```sh
@@ -75,5 +75,5 @@ _________________________________________________________________
 
 ### Performance
 
-Currently, just "better than nothing" (AUC 0.6~0.7).  
+Currently, just "better than nothing" (ROC-AUC 0.6~0.7).  
 Hoping somebody's breakthrough!
