@@ -3,8 +3,8 @@ An experiment kit for machine learning based earthquake prediction, which may ac
 
 ## Getting Started
 ```sh
-python cmd/train --recipe_id tokyo
-python cmd/predict --recipe_id tokyo --target_date 2020-02-23
+python3 cmd/train --recipe_id tokyo
+python3 cmd/predict --recipe_id tokyo --target_date 2020-02-23
 ```
 Then see 
 ```
