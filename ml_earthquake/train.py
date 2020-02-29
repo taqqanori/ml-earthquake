@@ -302,8 +302,8 @@ class _Reporter(Callback):
         self.val_loss = []
 
     def on_epoch_end(self, epoch, logs={}):
-        self.acc.append(float(logs.get('acc')))
-        self.val_acc.append(float(logs.get('val_acc')))
+        self.acc.append(float(logs.get('accuracy')))
+        self.val_acc.append(float(logs.get('val_accuracy')))
         self.loss.append(float(logs.get('loss')))
         self.val_loss.append(float(logs.get('val_loss')))
         if self.best_only:
