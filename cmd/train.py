@@ -40,7 +40,7 @@ def main(
         'earthquakes.csv')
     if not os.path.exists(data_path):
         print('collecting earthquake data...')
-        collect_data(data_path, start_time='2019-01-01')
+        collect_data(data_path, start_time='2019-01-01 00:00:00')
 
     with open(recipe, 'r', encoding='utf-8') as f:
         recipe_obj = json.load(f)
