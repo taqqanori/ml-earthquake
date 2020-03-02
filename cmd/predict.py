@@ -24,7 +24,7 @@ def main(\
         raise Exception('recipe: {} does not exists...'.format(recipe))
 
     tz = gettz(tz)
-    target_date = _midnight(datetime.now(tz=tz)) + timedelta(days=1) if target_date is None \
+    target_date = _midnight(datetime.now(tz=tz)) if target_date is None \
         else _midnight(datetime.strptime(target_date, '%Y-%m-%d')).astimezone(tz)
     window_end = target_date.astimezone(timezone.utc)
 
