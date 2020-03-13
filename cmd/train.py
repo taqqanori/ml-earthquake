@@ -20,6 +20,7 @@ def set_random_seed(s):
     tf.set_random_seed(s)
     sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
     K.set_session(sess)
+    return sess
 
 def main(
     recipe='recipe.json',
@@ -29,8 +30,6 @@ def main(
     work_dir='work',
     log_dir='log',
     random_seed=4126):
-
-    set_random_seed(random_seed)
 
     if not os.path.exists(recipe):
         raise Exception('recipe: {} does not exists...'.format(recipe))
@@ -44,9 +43,15 @@ def main(
 
     with open(recipe, 'r', encoding='utf-8') as f:
         recipe_obj = json.load(f)
+        sess = None
         for r in recipe_obj['recipe']:
             if recipe_id is not None and recipe_id != r['id']:
                 continue
+            
+            if sess is not None:
+                sess.close()
+                tf.reset_default_graph()
+            sess = set_random_seed(random_seed)
             print('start preprocess and train for recipe ID: {}'.format(r['id']))
             X_train, y_train, X_test, y_test, info_train, info_test = preprocess(
                 data_path,
