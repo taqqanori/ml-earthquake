@@ -63,6 +63,10 @@ def main(
                 r['predict_center_lng'],
                 r['predict_radius_meters'],
                 r['threshold_mag'],
+                -90 if r['min_lat'] is None else r['min_lat'],
+                90 if r['max_lat'] is None else r['max_lat'],
+                -180 if r['min_lng'] is None else r['min_lng'],
+                180 if r['max_lng'] is None else r['max_lng'],
                 cache_dir=work_dir
             )
             train(

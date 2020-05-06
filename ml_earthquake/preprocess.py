@@ -15,6 +15,10 @@ def preprocess(
     predict_center_lng,
     predict_radius_meters,
     threshold_mag,
+    min_lat=-90,
+    max_lat=90,
+    min_lng=-180,
+    max_lng=180,
     normalize_max_mag=10.0,
     normalize_max_freq=100,
     normalize_max_depth=500,
@@ -30,11 +34,15 @@ def preprocess(
     cache_info_path = None
     if cache_dir is not None:
         os.makedirs(cache_dir, exist_ok=True)
-        cache_X_path = os.path.join(cache_dir, 'X_{}_{}_{}_{}.npy'.format(
+        cache_X_path = os.path.join(cache_dir, 'X_{}_{}_{}_{}_{}_{}_{}_{}.npy'.format(
             window_days,
             lat_granularity,
             lng_granularity,
             predict_range_days,
+            min_lat,
+            max_lat,
+            min_lng,
+            max_lng
         ))
         y_info_id = '{}_{}_{}_{}_{}_{}'.format(
             window_days,
@@ -56,8 +64,8 @@ def preprocess(
                 info = pickle.load(f)
             return _train_test_split(X, y, info, window_days, predict_range_days, test_ratio)
 
-    lat_gap = 180 / lat_granularity
-    lng_gap = 360 / lng_granularity
+    lat_gap = (max_lat - min_lat) / lat_granularity
+    lng_gap = (max_lng - min_lng) / lng_granularity
     
     X = []
     y = []
@@ -106,16 +114,21 @@ def preprocess(
                         progress.update()
                 
             # x
-            lat_index = min(int((row['latitude'] - (-90)) // lat_gap), lat_granularity - 1)
-            lng_index = min(int((row['longitude'] - (-180) - predict_center_lng) // lng_gap), lng_granularity - 1)
-            # ch1: magnitude
-            x[lat_index, lng_index, 0] = _sum_mag(row['mag'], x[lat_index, lng_index, 0])
-            # ch2: frequency
-            x[lat_index, lng_index, 1] += 1
-            # ch3: average depth
-            avg = x[lat_index, lng_index, 2]
-            count = x[lat_index, lng_index, 1]
-            x[lat_index, lng_index, 2] = avg * ((count - 1) / count) + (row['depth'] / count)
+            if min_lat <= row['latitude'] and row['latitude'] <= max_lat and \
+               min_lng <= row['longitude'] and row['longitude'] <= max_lng:
+                lat_index = min(int((row['latitude'] - min_lat) // lat_gap), lat_granularity - 1)
+                if min_lng <= predict_center_lng and predict_center_lng <= max_lng:
+                    lng_index = min(int((row['longitude'] - min_lng - (predict_center_lng - min_lng)) // lng_gap), lng_granularity - 1)
+                else:
+                    lng_index = min(int((row['longitude'] - predict_center_lng) // lng_gap), lng_granularity - 1)
+                # ch1: magnitude
+                x[lat_index, lng_index, 0] = _sum_mag(row['mag'], x[lat_index, lng_index, 0])
+                # ch2: frequency
+                x[lat_index, lng_index, 1] += 1
+                # ch3: average depth
+                avg = x[lat_index, lng_index, 2]
+                count = x[lat_index, lng_index, 1]
+                x[lat_index, lng_index, 2] = avg * ((count - 1) / count) + (row['depth'] / count)
 
             # y
             distance = _distance(row['latitude'], row['longitude'], predict_center_lat, predict_center_lng)
