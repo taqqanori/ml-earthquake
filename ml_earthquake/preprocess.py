@@ -185,10 +185,10 @@ def _append(
         if predict_range_days < len(eq_buf):
             eq_buf.pop(0)
         return
+    X.append(np.array(X_buf[0:window_days]))
     X_buf.pop(0)
     y_buf.pop(0)
     eq_buf.pop(0)
-    X.append(np.array(X_buf[0:window_days]))
     y.append(any(y_buf))
     info.append({
         'predict_center_lat': predict_center_lat,
