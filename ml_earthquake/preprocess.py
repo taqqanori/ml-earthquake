@@ -101,6 +101,7 @@ def preprocess(
                 if show_progress:
                     progress.update()
                 _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf,\
+                        min_lat, max_lat, min_lng, max_lng, \
                         predict_center_lat, predict_center_lng, window_days, predict_range_days, threshold_mag)
                 x = np.zeros([lat_granularity, lng_granularity, 3])
                 _y = False
@@ -108,6 +109,7 @@ def preprocess(
                 for i in range(int((_midnight(d) - _midnight(date)) // timedelta(days=1))):
                     # blank days
                     _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf,\
+                        min_lat, max_lat, min_lng, max_lng, \
                         predict_center_lat, predict_center_lng, window_days, predict_range_days, threshold_mag)
                     date += timedelta(days=1)
                     if show_progress:
@@ -146,6 +148,7 @@ def preprocess(
 
     # the last day
     _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, \
+        min_lat, max_lat, min_lng, max_lng, \
         predict_center_lat, predict_center_lng, window_days, predict_range_days, threshold_mag)
 
     if for_prediction:
@@ -183,6 +186,10 @@ def _train_test_split(X, y, info, window_days, predict_range_days, test_ratio):
 
 def _append(
     date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf,
+    min_lat, 
+    max_lat, 
+    min_lng, 
+    max_lng,
     predict_center_lat,
     predict_center_lng,
     window_days,
@@ -204,6 +211,10 @@ def _append(
     X.append(np.array(X_buf[0:window_days]))
     y.append(any(y_buf))
     info.append({
+        'min_lat': min_lat,
+        'max_lat': max_lat,
+        'min_lng': min_lng,
+        'max_lng': max_lng,
         'predict_center_lat': predict_center_lat,
         'predict_center_lng': predict_center_lng,
         'window_start': date - timedelta(days=window_days + predict_range_days),
