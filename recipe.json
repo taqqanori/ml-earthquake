@@ -6,18 +6,19 @@
                 "ja": "東京",
                 "en": "Tokyo"
             },
-            "window_days": 15,
-            "predict_range_days": 1,
+            "window_days": 30,
+            "predict_range_days": 15,
             "lat_granularity": 20,
             "lng_granularity": 30,
             "predict_center_lat": 35.680934,
             "predict_center_lng": 139.767551,
-            "predict_radius_meters": 150000,
-            "threshold_mag": 4.0,
+            "predict_radius_meters": 300000,
+            "threshold_mag": 5.5,
             "test_ratio": 0.25,
-            "learning_rate": 5e-6,
+            "learning_rate": 5e-5,
+            "decay": 0.1,
             "epochs": 50,
-            "dropout": 0.3,
+            "dropout": 0.8,
             "resampling_methods": [
                 {
                     "name": "RandomUnderSampler"

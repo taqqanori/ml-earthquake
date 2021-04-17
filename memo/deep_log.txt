@@ -1,0 +1,230 @@
+4112/4112 [==============================] - 2373s 577ms/step - loss: 34.8576 - accuracy: 0.5015 - val_loss: 0.6975 - val_accuracy: 0.2368
+Epoch 1: AUC: 0.422, F1: 0.382, acc: 0.237, precision: 0.236, recall: 0.999, TP: 887, FN: 1, FP: 2867, TN: 3
+
+Epoch 00001: val_loss improved from inf to 0.69753, saving model to out\tokyo\best_model.h5
+WARNING:tensorflow:From C:\Anaconda3\lib\site-packages\keras\callbacks\tensorboard_v1.py:343: The name tf.Summary is deprecated. Please use tf.compat.v1.Summary instead.
+
+Epoch 2/50
+4112/4112 [==============================] - 2428s 591ms/step - loss: 34.7636 - accuracy: 0.4971 - val_loss: 0.7036 - val_accuracy: 0.2395
+
+Epoch 00002: val_loss did not improve from 0.69753
+Epoch 3/50
+4112/4112 [==============================] - 2590s 630ms/step - loss: 32.7787 - accuracy: 0.5063 - val_loss: 0.7116 - val_accuracy: 0.2406
+
+Epoch 00003: val_loss did not improve from 0.69753
+Epoch 4/50
+4112/4112 [==============================] - 2474s 602ms/step - loss: 34.3598 - accuracy: 0.5032 - val_loss: 0.7124 - val_accuracy: 0.2544
+
+Epoch 00004: val_loss did not improve from 0.69753
+Epoch 5/50
+4112/4112 [==============================] - 2508s 610ms/step - loss: 35.0255 - accuracy: 0.4820 - val_loss: 0.7053 - val_accuracy: 0.3273
+
+Epoch 00005: val_loss did not improve from 0.69753
+Epoch 6/50
+4112/4112 [==============================] - 2744s 667ms/step - loss: 33.9091 - accuracy: 0.4908 - val_loss: 0.7001 - val_accuracy: 0.4127
+
+Epoch 00006: val_loss did not improve from 0.69753
+Epoch 7/50
+4112/4112 [==============================] - 2371s 577ms/step - loss: 34.4655 - accuracy: 0.5007 - val_loss: 0.6984 - val_accuracy: 0.4353
+
+Epoch 00007: val_loss did not improve from 0.69753
+Epoch 8/50
+4112/4112 [==============================] - 2448s 595ms/step - loss: 34.2501 - accuracy: 0.4864 - val_loss: 0.6975 - val_accuracy: 0.4500
+Epoch 8: AUC: 0.626, F1: 0.406, acc: 0.450, precision: 0.272, recall: 0.794, TP: 705, FN: 183, FP: 1884, TN: 986
+
+Epoch 00008: val_loss improved from 0.69753 to 0.69750, saving model to out\tokyo\best_model.h5
+Epoch 9/50
+4112/4112 [==============================] - 2446s 595ms/step - loss: 31.5863 - accuracy: 0.5034 - val_loss: 0.6972 - val_accuracy: 0.4521
+Epoch 9: AUC: 0.627, F1: 0.404, acc: 0.452, precision: 0.272, recall: 0.787, TP: 699, FN: 189, FP: 1870, TN: 1000
+
+Epoch 00009: val_loss improved from 0.69750 to 0.69720, saving model to out\tokyo\best_model.h5
+Epoch 10/50
+4112/4112 [==============================] - 2555s 621ms/step - loss: 32.2840 - accuracy: 0.5046 - val_loss: 0.6971 - val_accuracy: 0.4516
+Epoch 10: AUC: 0.627, F1: 0.404, acc: 0.452, precision: 0.272, recall: 0.787, TP: 699, FN: 189, FP: 1872, TN: 998
+
+Epoch 00010: val_loss improved from 0.69720 to 0.69712, saving model to out\tokyo\best_model.h5
+Epoch 11/50
+4112/4112 [==============================] - 2868s 697ms/step - loss: 31.1792 - accuracy: 0.4971 - val_loss: 0.6970 - val_accuracy: 0.4532
+Epoch 11: AUC: 0.627, F1: 0.405, acc: 0.453, precision: 0.273, recall: 0.787, TP: 699, FN: 189, FP: 1866, TN: 1004
+
+Epoch 00011: val_loss improved from 0.69712 to 0.69700, saving model to out\tokyo\best_model.h5
+Epoch 12/50
+4112/4112 [==============================] - 2383s 580ms/step - loss: 31.8008 - accuracy: 0.5039 - val_loss: 0.6968 - val_accuracy: 0.4542
+Epoch 12: AUC: 0.627, F1: 0.404, acc: 0.454, precision: 0.272, recall: 0.782, TP: 694, FN: 194, FP: 1857, TN: 1013
+
+Epoch 00012: val_loss improved from 0.69700 to 0.69684, saving model to out\tokyo\best_model.h5
+Epoch 13/50
+4112/4112 [==============================] - 2405s 585ms/step - loss: 32.6347 - accuracy: 0.4937 - val_loss: 0.6967 - val_accuracy: 0.4577
+Epoch 13: AUC: 0.628, F1: 0.406, acc: 0.458, precision: 0.274, recall: 0.784, TP: 696, FN: 192, FP: 1846, TN: 1024
+
+Epoch 00013: val_loss improved from 0.69684 to 0.69671, saving model to out\tokyo\best_model.h5
+Epoch 14/50
+4112/4112 [==============================] - 2340s 569ms/step - loss: 32.4222 - accuracy: 0.5107 - val_loss: 0.6965 - val_accuracy: 0.4604
+Epoch 14: AUC: 0.628, F1: 0.406, acc: 0.460, precision: 0.274, recall: 0.780, TP: 693, FN: 195, FP: 1833, TN: 1037
+
+Epoch 00014: val_loss improved from 0.69671 to 0.69648, saving model to out\tokyo\best_model.h5
+Epoch 15/50
+4112/4112 [==============================] - 2298s 559ms/step - loss: 30.8202 - accuracy: 0.5163 - val_loss: 0.6963 - val_accuracy: 0.4614
+Epoch 15: AUC: 0.628, F1: 0.405, acc: 0.461, precision: 0.274, recall: 0.777, TP: 690, FN: 198, FP: 1826, TN: 1044
+
+Epoch 00015: val_loss improved from 0.69648 to 0.69633, saving model to out\tokyo\best_model.h5
+Epoch 16/50
+4112/4112 [==============================] - 2307s 561ms/step - loss: 29.7899 - accuracy: 0.5107 - val_loss: 0.6962 - val_accuracy: 0.4635
+Epoch 16: AUC: 0.628, F1: 0.406, acc: 0.464, precision: 0.275, recall: 0.777, TP: 690, FN: 198, FP: 1818, TN: 1052
+
+Epoch 00016: val_loss improved from 0.69633 to 0.69622, saving model to out\tokyo\best_model.h5
+Epoch 17/50
+4112/4112 [==============================] - 2318s 564ms/step - loss: 32.6606 - accuracy: 0.5054 - val_loss: 0.6961 - val_accuracy: 0.4617
+Epoch 17: AUC: 0.629, F1: 0.405, acc: 0.462, precision: 0.274, recall: 0.776, TP: 689, FN: 199, FP: 1824, TN: 1046
+
+Epoch 00017: val_loss improved from 0.69622 to 0.69614, saving model to out\tokyo\best_model.h5
+Epoch 18/50
+4112/4112 [==============================] - 2336s 568ms/step - loss: 31.4236 - accuracy: 0.4927 - val_loss: 0.6961 - val_accuracy: 0.4635
+Epoch 18: AUC: 0.629, F1: 0.406, acc: 0.464, precision: 0.275, recall: 0.777, TP: 690, FN: 198, FP: 1818, TN: 1052
+
+Epoch 00018: val_loss improved from 0.69614 to 0.69606, saving model to out\tokyo\best_model.h5
+Epoch 19/50
+4112/4112 [==============================] - 2401s 584ms/step - loss: 30.5944 - accuracy: 0.5129 - val_loss: 0.6958 - val_accuracy: 0.4673
+Epoch 19: AUC: 0.629, F1: 0.407, acc: 0.467, precision: 0.276, recall: 0.774, TP: 687, FN: 201, FP: 1801, TN: 1069
+
+Epoch 00019: val_loss improved from 0.69606 to 0.69581, saving model to out\tokyo\best_model.h5
+Epoch 20/50
+4112/4112 [==============================] - 2392s 582ms/step - loss: 29.2790 - accuracy: 0.4920 - val_loss: 0.6957 - val_accuracy: 0.4683
+Epoch 20: AUC: 0.628, F1: 0.406, acc: 0.468, precision: 0.276, recall: 0.769, TP: 683, FN: 205, FP: 1793, TN: 1077
+
+Epoch 00020: val_loss improved from 0.69581 to 0.69575, saving model to out\tokyo\best_model.h5
+Epoch 21/50
+4112/4112 [==============================] - 2362s 574ms/step - loss: 30.5930 - accuracy: 0.5034 - val_loss: 0.6956 - val_accuracy: 0.4710
+Epoch 21: AUC: 0.628, F1: 0.407, acc: 0.471, precision: 0.277, recall: 0.769, TP: 683, FN: 205, FP: 1783, TN: 1087
+
+Epoch 00021: val_loss improved from 0.69575 to 0.69563, saving model to out\tokyo\best_model.h5
+Epoch 22/50
+4112/4112 [==============================] - 2339s 569ms/step - loss: 32.1889 - accuracy: 0.4956 - val_loss: 0.6956 - val_accuracy: 0.4689
+Epoch 22: AUC: 0.628, F1: 0.404, acc: 0.469, precision: 0.275, recall: 0.761, TP: 676, FN: 212, FP: 1784, TN: 1086
+
+Epoch 00022: val_loss improved from 0.69563 to 0.69557, saving model to out\tokyo\best_model.h5
+Epoch 23/50
+4112/4112 [==============================] - 2352s 572ms/step - loss: 30.0680 - accuracy: 0.4942 - val_loss: 0.6956 - val_accuracy: 0.4683
+
+Epoch 00023: val_loss did not improve from 0.69557
+Epoch 24/50
+4112/4112 [==============================] - 2363s 575ms/step - loss: 32.2071 - accuracy: 0.4910 - val_loss: 0.6955 - val_accuracy: 0.4691
+Epoch 24: AUC: 0.627, F1: 0.404, acc: 0.469, precision: 0.275, recall: 0.760, TP: 675, FN: 213, FP: 1782, TN: 1088
+
+Epoch 00024: val_loss improved from 0.69557 to 0.69550, saving model to out\tokyo\best_model.h5
+Epoch 25/50
+4112/4112 [==============================] - 2387s 580ms/step - loss: 32.1748 - accuracy: 0.4920 - val_loss: 0.6956 - val_accuracy: 0.4678
+
+Epoch 00025: val_loss did not improve from 0.69550
+Epoch 26/50
+4112/4112 [==============================] - 2395s 582ms/step - loss: 29.9918 - accuracy: 0.5039 - val_loss: 0.6955 - val_accuracy: 0.4681
+
+Epoch 00026: val_loss did not improve from 0.69550
+Epoch 27/50
+4112/4112 [==============================] - 2415s 587ms/step - loss: 32.1556 - accuracy: 0.5161 - val_loss: 0.6954 - val_accuracy: 0.4702
+Epoch 27: AUC: 0.626, F1: 0.403, acc: 0.470, precision: 0.275, recall: 0.757, TP: 672, FN: 216, FP: 1775, TN: 1095
+
+Epoch 00027: val_loss improved from 0.69550 to 0.69543, saving model to out\tokyo\best_model.h5
+Epoch 28/50
+4112/4112 [==============================] - 2447s 595ms/step - loss: 32.5828 - accuracy: 0.4835 - val_loss: 0.6954 - val_accuracy: 0.4707
+Epoch 28: AUC: 0.626, F1: 0.403, acc: 0.471, precision: 0.275, recall: 0.756, TP: 671, FN: 217, FP: 1772, TN: 1098
+
+Epoch 00028: val_loss improved from 0.69543 to 0.69536, saving model to out\tokyo\best_model.h5
+Epoch 29/50
+4112/4112 [==============================] - 2475s 602ms/step - loss: 30.5873 - accuracy: 0.5041 - val_loss: 0.6953 - val_accuracy: 0.4715
+Epoch 29: AUC: 0.627, F1: 0.404, acc: 0.472, precision: 0.275, recall: 0.758, TP: 673, FN: 215, FP: 1771, TN: 1099
+
+Epoch 00029: val_loss improved from 0.69536 to 0.69535, saving model to out\tokyo\best_model.h5
+Epoch 30/50
+4112/4112 [==============================] - 2500s 608ms/step - loss: 31.0038 - accuracy: 0.4983 - val_loss: 0.6954 - val_accuracy: 0.4699
+
+Epoch 00030: val_loss did not improve from 0.69535
+Epoch 31/50
+4112/4112 [==============================] - 2514s 611ms/step - loss: 29.4720 - accuracy: 0.5148 - val_loss: 0.6953 - val_accuracy: 0.4699
+Epoch 31: AUC: 0.627, F1: 0.403, acc: 0.470, precision: 0.275, recall: 0.757, TP: 672, FN: 216, FP: 1776, TN: 1094
+
+Epoch 00031: val_loss improved from 0.69535 to 0.69532, saving model to out\tokyo\best_model.h5
+Epoch 32/50
+4112/4112 [==============================] - 2749s 669ms/step - loss: 29.3637 - accuracy: 0.5051 - val_loss: 0.6953 - val_accuracy: 0.4697
+
+Epoch 00032: val_loss did not improve from 0.69532
+Epoch 33/50
+4112/4112 [==============================] - 2967s 721ms/step - loss: 31.2459 - accuracy: 0.4985 - val_loss: 0.6954 - val_accuracy: 0.4689
+
+Epoch 00033: val_loss did not improve from 0.69532
+Epoch 34/50
+4112/4112 [==============================] - 2936s 714ms/step - loss: 30.8691 - accuracy: 0.5024 - val_loss: 0.6953 - val_accuracy: 0.4707
+Epoch 34: AUC: 0.627, F1: 0.403, acc: 0.471, precision: 0.275, recall: 0.756, TP: 671, FN: 217, FP: 1772, TN: 1098
+
+Epoch 00034: val_loss improved from 0.69532 to 0.69526, saving model to out\tokyo\best_model.h5
+Epoch 35/50
+4112/4112 [==============================] - 2894s 704ms/step - loss: 32.5270 - accuracy: 0.4920 - val_loss: 0.6951 - val_accuracy: 0.4726
+Epoch 35: AUC: 0.627, F1: 0.403, acc: 0.473, precision: 0.275, recall: 0.755, TP: 670, FN: 218, FP: 1764, TN: 1106
+
+Epoch 00035: val_loss improved from 0.69526 to 0.69514, saving model to out\tokyo\best_model.h5
+Epoch 36/50
+4112/4112 [==============================] - 2820s 686ms/step - loss: 30.3780 - accuracy: 0.5156 - val_loss: 0.6951 - val_accuracy: 0.4734
+Epoch 36: AUC: 0.627, F1: 0.403, acc: 0.473, precision: 0.275, recall: 0.752, TP: 668, FN: 220, FP: 1759, TN: 1111
+
+Epoch 00036: val_loss improved from 0.69514 to 0.69507, saving model to out\tokyo\best_model.h5
+Epoch 37/50
+4112/4112 [==============================] - 2856s 695ms/step - loss: 31.4677 - accuracy: 0.4934 - val_loss: 0.6951 - val_accuracy: 0.4726
+
+Epoch 00037: val_loss did not improve from 0.69507
+Epoch 38/50
+4112/4112 [==============================] - 2932s 713ms/step - loss: 29.3447 - accuracy: 0.5044 - val_loss: 0.6951 - val_accuracy: 0.4718
+
+Epoch 00038: val_loss did not improve from 0.69507
+Epoch 39/50
+4112/4112 [==============================] - 3165s 770ms/step - loss: 31.3587 - accuracy: 0.4937 - val_loss: 0.6949 - val_accuracy: 0.4747
+Epoch 39: AUC: 0.626, F1: 0.402, acc: 0.475, precision: 0.275, recall: 0.747, TP: 663, FN: 225, FP: 1749, TN: 1121
+
+Epoch 00039: val_loss improved from 0.69507 to 0.69495, saving model to out\tokyo\best_model.h5
+Epoch 40/50
+4112/4112 [==============================] - 3062s 745ms/step - loss: 31.7815 - accuracy: 0.4983 - val_loss: 0.6950 - val_accuracy: 0.4726
+
+Epoch 00040: val_loss did not improve from 0.69495
+Epoch 41/50
+4112/4112 [==============================] - 3205s 779ms/step - loss: 30.8950 - accuracy: 0.4964 - val_loss: 0.6949 - val_accuracy: 0.4739
+Epoch 41: AUC: 0.625, F1: 0.401, acc: 0.474, precision: 0.274, recall: 0.744, TP: 661, FN: 227, FP: 1750, TN: 1120
+
+Epoch 00041: val_loss improved from 0.69495 to 0.69488, saving model to out\tokyo\best_model.h5
+Epoch 42/50
+4112/4112 [==============================] - 3068s 746ms/step - loss: 30.8173 - accuracy: 0.5066 - val_loss: 0.6948 - val_accuracy: 0.4755
+Epoch 42: AUC: 0.626, F1: 0.401, acc: 0.476, precision: 0.275, recall: 0.744, TP: 661, FN: 227, FP: 1744, TN: 1126
+
+Epoch 00042: val_loss improved from 0.69488 to 0.69483, saving model to out\tokyo\best_model.h5
+Epoch 43/50
+4112/4112 [==============================] - 3078s 749ms/step - loss: 28.3972 - accuracy: 0.5143 - val_loss: 0.6948 - val_accuracy: 0.4750
+
+Epoch 00043: val_loss did not improve from 0.69483
+Epoch 44/50
+4112/4112 [==============================] - 2946s 716ms/step - loss: 32.1548 - accuracy: 0.4971 - val_loss: 0.6947 - val_accuracy: 0.4774
+Epoch 44: AUC: 0.626, F1: 0.401, acc: 0.477, precision: 0.275, recall: 0.741, TP: 658, FN: 230, FP: 1734, TN: 1136
+
+Epoch 00044: val_loss improved from 0.69483 to 0.69471, saving model to out\tokyo\best_model.h5
+Epoch 45/50
+4112/4112 [==============================] - 2964s 721ms/step - loss: 31.3022 - accuracy: 0.4968 - val_loss: 0.6948 - val_accuracy: 0.4768
+
+Epoch 00045: val_loss did not improve from 0.69471
+Epoch 46/50
+4112/4112 [==============================] - 3074s 748ms/step - loss: 30.4411 - accuracy: 0.4959 - val_loss: 0.6948 - val_accuracy: 0.4750
+
+Epoch 00046: val_loss did not improve from 0.69471
+Epoch 47/50
+4112/4112 [==============================] - 3058s 744ms/step - loss: 31.6417 - accuracy: 0.4888 - val_loss: 0.6948 - val_accuracy: 0.4768
+
+Epoch 00047: val_loss did not improve from 0.69471
+Epoch 48/50
+4112/4112 [==============================] - 3101s 754ms/step - loss: 29.0739 - accuracy: 0.5156 - val_loss: 0.6948 - val_accuracy: 0.4758
+
+Epoch 00048: val_loss did not improve from 0.69471
+Epoch 49/50
+4112/4112 [==============================] - 3151s 766ms/step - loss: 32.1193 - accuracy: 0.4825 - val_loss: 0.6948 - val_accuracy: 0.4768
+
+Epoch 00049: val_loss did not improve from 0.69471
+Epoch 50/50
+4112/4112 [==============================] - 3170s 771ms/step - loss: 31.1929 - accuracy: 0.4976 - val_loss: 0.6947 - val_accuracy: 0.4798
+Epoch 50: AUC: 0.625, F1: 0.403, acc: 0.480, precision: 0.276, recall: 0.742, TP: 659, FN: 229, FP: 1726, TN: 1144
+
+Epoch 00050: val_loss improved from 0.69471 to 0.69465, saving model to out\tokyo\best_model.h5
