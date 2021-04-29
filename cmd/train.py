@@ -22,14 +22,15 @@ def set_random_seed(s):
     K.set_session(sess)
     return sess
 
+
 def main(
-    recipe='recipe.json',
-    recipe_id=None,
-    data_dir='data',
-    out_dir='out',
-    work_dir='work',
-    log_dir='log',
-    random_seed=4126):
+        recipe='recipe.json',
+        recipe_id=None,
+        data_dir='data',
+        out_dir='out',
+        work_dir='work',
+        log_dir='log',
+        random_seed=4126):
 
     if not os.path.exists(recipe):
         raise Exception('recipe: {} does not exists...'.format(recipe))
@@ -47,18 +48,17 @@ def main(
         for r in recipe_obj['recipe']:
             if recipe_id is not None and recipe_id != r['id']:
                 continue
-            
+
             if sess is not None:
                 sess.close()
                 tf.reset_default_graph()
             sess = set_random_seed(random_seed)
-            print('start preprocess and train for recipe ID: {}'.format(r['id']))
+            print(
+                'start preprocess and train for recipe ID: {}'.format(r['id']))
             X_train, y_train, X_test, y_test, info_train, info_test = preprocess(
                 data_path,
                 r['window_days'],
                 r['predict_range_days'],
-                r['lat_granularity'],
-                r['lng_granularity'],
                 r['predict_center_lat'],
                 r['predict_center_lng'],
                 r['predict_radius_meters'],
@@ -80,6 +80,7 @@ def main(
                 resampling_methods=r['resampling_methods'] if 'resampling_methods' in r else None,
                 balanced_batch=r['balanced_batch'] if 'balanced_batch' in r else None
             )
+
 
 if __name__ == '__main__':
     fire.Fire(main)
