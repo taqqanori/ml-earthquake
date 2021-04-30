@@ -32,9 +32,10 @@ def preprocess(
     cache_info_path = None
     if cache_dir is not None:
         os.makedirs(cache_dir, exist_ok=True)
-        cache_X_path = os.path.join(cache_dir, 'X_{}_{}.npy'.format(
+        cache_X_path = os.path.join(cache_dir, 'X_{}_{}_{}.npy'.format(
             window_days,
             predict_range_days,
+            num_points,
         ))
         y_info_id = '{}_{}_{}_{}_{}_{}'.format(
             window_days,
@@ -127,7 +128,7 @@ def preprocess(
     # the last day
     _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf,
             predict_center_lat, predict_center_lng, window_days, predict_range_days, threshold_mag,
-            normalize_max_mag, normalize_max_depth)
+            num_points, normalize_max_mag, normalize_max_depth)
 
     if for_prediction:
         X.append(_to_points(X_buf[0:window_days], num_points, normalize_max_mag, normalize_max_depth))

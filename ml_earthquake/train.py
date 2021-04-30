@@ -6,8 +6,12 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, roc_auc_score
 from keras.callbacks import Callback
 from keras.models import Sequential, load_model
-from keras.layers.convolutional_recurrent import ConvLSTM2D
-from keras.layers.normalization import BatchNormalization
+import tensorflow as tf
+from keras.layers import Input
+from keras.models import Model
+from keras.layers import Dense, Flatten, Reshape, Dropout
+from keras.layers import Convolution1D, MaxPooling1D, BatchNormalization
+from keras.layers import Lambda
 from keras.optimizers import Adam
 from keras.layers.core import Dense, Activation, Dropout, Flatten
 from keras.callbacks import TensorBoard, ModelCheckpoint
@@ -26,6 +30,11 @@ from imblearn.under_sampling import (
 from imblearn.keras import BalancedBatchGenerator
 
 date_format = '%Y%m%d'
+
+
+def mat_mul(A, B):
+    return tf.matmul(A, B)
+
 
 def train(
     X_train,
@@ -48,26 +57,84 @@ def train(
     if out_dir is not None:
         os.makedirs(out_dir, exist_ok=True)
 
-    model = Sequential()
+    num_points = X_train.shape[1]
+    num_features = X_train.shape[2]
 
-    model.add(ConvLSTM2D(
-        input_shape=(X_train.shape[1], X_train.shape[2], X_train.shape[3], X_train.shape[4]),
-        filters=30,
-        kernel_size=(3, 3),
-        padding='same',
-        dropout=dropout,
-        return_sequences=False
-    ))
-    model.add(BatchNormalization())
+    # define optimizer
+    adam = Adam(lr=0.001, decay=0.7)
 
-    model.add(Flatten())
+    # ------------------------------------ Pointnet Architecture
+    # input_Transformation_net
+    input_points = Input(shape=(num_points, num_features))
+    x = Convolution1D(64, 1, activation='relu',
+                    input_shape=(num_points, num_features))(input_points)
+    x = BatchNormalization()(x)
+    x = Convolution1D(128, 1, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = Convolution1D(1024, 1, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = MaxPooling1D(pool_size=num_points)(x)
+    x = Dense(512, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = Dense(256, activation='relu')(x)
+    x = BatchNormalization()(x)
+    x = Dense(
+        num_features * num_features, 
+        weights=[
+            np.zeros([256, num_features * num_features]), 
+            np.eye(num_features).flatten().astype(np.float32)
+        ]
+    )(x)
+    input_T = Reshape((num_features, num_features))(x)
 
-    model.add(Dense(100, activation='relu'))
-    model.add(Dropout(dropout))
+    # forward net
+    g = Lambda(mat_mul, arguments={'B': input_T})(input_points)
+    g = Convolution1D(64, 1, input_shape=(num_points, num_features), activation='relu')(g)
+    g = BatchNormalization()(g)
+    g = Convolution1D(64, 1, input_shape=(num_points, num_features), activation='relu')(g)
+    g = BatchNormalization()(g)
 
-    model.add(Dense(1, activation='sigmoid'))
+    # feature transform net
+    f = Convolution1D(64, 1, activation='relu')(g)
+    f = BatchNormalization()(f)
+    f = Convolution1D(128, 1, activation='relu')(f)
+    f = BatchNormalization()(f)
+    f = Convolution1D(1024, 1, activation='relu')(f)
+    f = BatchNormalization()(f)
+    f = MaxPooling1D(pool_size=num_points)(f)
+    f = Dense(512, activation='relu')(f)
+    f = BatchNormalization()(f)
+    f = Dense(256, activation='relu')(f)
+    f = BatchNormalization()(f)
+    f = Dense(64 * 64, weights=[np.zeros([256, 64 * 64]), np.eye(64).flatten().astype(np.float32)])(f)
+    feature_T = Reshape((64, 64))(f)
 
-    adam = Adam(lr=learning_rate, decay=decay)
+    # forward net
+    g = Lambda(mat_mul, arguments={'B': feature_T})(g)
+    g = Convolution1D(64, 1, activation='relu')(g)
+    g = BatchNormalization()(g)
+    g = Convolution1D(128, 1, activation='relu')(g)
+    g = BatchNormalization()(g)
+    g = Convolution1D(1024, 1, activation='relu')(g)
+    g = BatchNormalization()(g)
+
+    # global_feature
+    global_feature = MaxPooling1D(pool_size=num_points)(g)
+
+    # point_net_cls
+    c = Dense(512, activation='relu')(global_feature)
+    c = BatchNormalization()(c)
+    c = Dropout(rate=0.7)(c)
+    c = Dense(256, activation='relu')(c)
+    c = BatchNormalization()(c)
+    c = Dropout(rate=0.7)(c)
+    c = Dense(1, activation='sigmoid')(c)
+    prediction = Flatten()(c)
+    # --------------------------------------------------end of pointnet
+
+    # print the model summary
+    model = Model(inputs=input_points, outputs=prediction)
+
     model.compile(optimizer=adam, loss='binary_crossentropy', metrics=["accuracy"])
     model.summary()
 
@@ -228,12 +295,10 @@ def _resample(X_train, y_train, resampling_method, random_state):
     resampler = _get_resampler(resampling_method, random_state)
     print('performing {}...'.format(resampling_method['name']))
     X_train_resample, y_train = resampler.fit_sample(X_train.reshape(X_train.shape[0], -1), y_train)
-    X_train = X_train_resample.reshape(\
-        X_train_resample.shape[0], \
-        X_train.shape[1], \
-        X_train.shape[2], \
-        X_train.shape[3], \
-        X_train.shape[4])
+    X_train = X_train_resample.reshape(
+        X_train_resample.shape[0],
+        X_train.shape[1],
+        X_train.shape[2])
     positive = (0.5 <= y_train).sum()
     negative = (y_train < 0.5).sum()
     print('{} performed train data balance P:{} : N:{}'.format(
