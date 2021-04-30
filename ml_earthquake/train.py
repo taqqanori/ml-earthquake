@@ -145,7 +145,7 @@ def train(
     if out_dir is not None:
         model_path = os.path.join(out_dir, model_file_name)
         callbacks.append(
-            ModelCheckpoint(filepath=model_path, verbose=1, save_best_only=True)
+            ModelCheckpoint(filepath=model_path, verbose=1, save_best_only=True, save_weights_only=True)
         )
 
     if log_dir is not None:
