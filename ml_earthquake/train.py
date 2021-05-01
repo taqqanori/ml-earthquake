@@ -57,8 +57,58 @@ def train(
     if out_dir is not None:
         os.makedirs(out_dir, exist_ok=True)
 
-    num_points = X_train.shape[1]
-    num_features = X_train.shape[2]
+    model = _model(X_train)
+    model.summary()
+
+    reporter = _Reporter(X_test, y_test)
+    callbacks = [reporter]
+
+    model_path = None
+    if out_dir is not None:
+        model_path = os.path.join(out_dir, model_file_name)
+        callbacks.append(
+            ModelCheckpoint(filepath=model_path, verbose=1, save_best_only=True, save_weights_only=True)
+        )
+
+    if log_dir is not None:
+        log_path = os.path.join(log_dir, datetime.now().strftime(date_format + '_%H%M%S'))
+        callbacks.append(TensorBoard(log_dir=log_path))
+    
+    positive = (0.5 <= y_train).sum()
+    negative = (y_train < 0.5).sum()
+    print('train data balance P:{} : N:{}'.format(positive, negative))
+    class_weight = {
+        0: positive / (positive + negative),
+        1: negative / (positive + negative),
+    } if use_class_weight else None
+
+    if resampling_methods is not None:
+        for resampling_method in resampling_methods:
+            X_train, y_train = _resample(X_train, y_train, resampling_method, random_state)
+
+    if balanced_batch == True:
+        print('using BalancedBatchGenerator')
+        batch_gen = BalancedBatchGenerator(\
+            X_train, y_train, \
+            sampler=RandomUnderSamplerWrapper(), random_state=random_state)
+        model.fit_generator(generator=batch_gen, \
+            epochs=epochs, callbacks=callbacks, \
+            validation_data=(X_test, y_test),
+            class_weight=class_weight)
+    else:
+        model.fit(X_train, y_train, \
+            epochs=epochs, callbacks=callbacks, \
+            validation_data=(X_test, y_test),
+            class_weight=class_weight)
+    
+    if out_dir is not None and info_train is not None and info_test is not None:
+        _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter)
+
+
+def _model(X):
+
+    num_points = X.shape[1]
+    num_features = X.shape[2]
 
     # define optimizer
     adam = Adam(lr=0.001, decay=0.7)
@@ -134,56 +184,14 @@ def train(
 
     # print the model summary
     model = Model(inputs=input_points, outputs=prediction)
-
     model.compile(optimizer=adam, loss='binary_crossentropy', metrics=["accuracy"])
-    model.summary()
 
-    reporter = _Reporter(X_test, y_test)
-    callbacks = [reporter]
+    return model
 
-    model_path = None
-    if out_dir is not None:
-        model_path = os.path.join(out_dir, model_file_name)
-        callbacks.append(
-            ModelCheckpoint(filepath=model_path, verbose=1, save_best_only=True, save_weights_only=True)
-        )
-
-    if log_dir is not None:
-        log_path = os.path.join(log_dir, datetime.now().strftime(date_format + '_%H%M%S'))
-        callbacks.append(TensorBoard(log_dir=log_path))
-    
-    positive = (0.5 <= y_train).sum()
-    negative = (y_train < 0.5).sum()
-    print('train data balance P:{} : N:{}'.format(positive, negative))
-    class_weight = {
-        0: positive / (positive + negative),
-        1: negative / (positive + negative),
-    } if use_class_weight else None
-
-    if resampling_methods is not None:
-        for resampling_method in resampling_methods:
-            X_train, y_train = _resample(X_train, y_train, resampling_method, random_state)
-
-    if balanced_batch == True:
-        print('using BalancedBatchGenerator')
-        batch_gen = BalancedBatchGenerator(\
-            X_train, y_train, \
-            sampler=RandomUnderSamplerWrapper(), random_state=random_state)
-        model.fit_generator(generator=batch_gen, \
-            epochs=epochs, callbacks=callbacks, \
-            validation_data=(X_test, y_test),
-            class_weight=class_weight)
-    else:
-        model.fit(X_train, y_train, \
-            epochs=epochs, callbacks=callbacks, \
-            validation_data=(X_test, y_test),
-            class_weight=class_weight)
-    
-    if out_dir is not None and info_train is not None and info_test is not None:
-        _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter)
     
 def _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter):
-    best_model = load_model(model_path)
+    best_model = _model(X_test)
+    best_model.load_weights(model_path)
     acc, auc, f1, precision, recall, tp, fn, fp, tn = _eval(best_model, X_test, y_test)
 
     # summary
@@ -238,44 +246,42 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter
             'window_end': window_end,
             'predict_start': predict_start,
             'predict_end': predict_end,
-            'mag_heatmaps': [],
-            'freq_heatmaps': [],
-            'depth_heatmaps': [],
-            'lat_gap': 180 / X_test[i].shape[1],
-            'lng_gap': 360 / X_test[i].shape[2],
+            # 'mag_heatmaps': [],
+            # 'freq_heatmaps': [],
+            # 'depth_heatmaps': [],
             'threshold_mag': info_test[i]['threshold_mag'],
             'earthquakes': []
         }
-        for win in range(X_test[i].shape[0]):
-            mag_heatmap = []
-            freq_heatmap = []
-            depth_heatmap = []
-            for lat in range(X_test[i].shape[1]):
-                for lng in range(X_test[i].shape[2]):
-                    mag = X_test[i][win][lat][lng][0]
-                    freq = X_test[i][win][lat][lng][1]
-                    depth = X_test[i][win][lat][lng][2]
-                    if 0 < mag:
-                        mag_heatmap.append({
-                            'lat': lat,
-                            'lng': lng,
-                            'heat': mag
-                        })
-                    if 0 < freq:
-                        freq_heatmap.append({
-                            'lat': lat,
-                            'lng': lng,
-                            'heat': freq
-                        })
-                    if 0 < depth:
-                        depth_heatmap.append({
-                            'lat': lat,
-                            'lng': lng,
-                            'heat': depth
-                        })
-            detail['mag_heatmaps'].append(mag_heatmap)
-            detail['freq_heatmaps'].append(freq_heatmap)
-            detail['depth_heatmaps'].append(depth_heatmap)
+        # for win in range(X_test[i].shape[0]):
+        #     mag_heatmap = []
+        #     freq_heatmap = []
+        #     depth_heatmap = []
+        #     for lat in range(X_test[i].shape[1]):
+        #         for lng in range(X_test[i].shape[2]):
+        #             mag = X_test[i][win][lat][lng][0]
+        #             freq = X_test[i][win][lat][lng][1]
+        #             depth = X_test[i][win][lat][lng][2]
+        #             if 0 < mag:
+        #                 mag_heatmap.append({
+        #                     'lat': lat,
+        #                     'lng': lng,
+        #                     'heat': mag
+        #                 })
+        #             if 0 < freq:
+        #                 freq_heatmap.append({
+        #                     'lat': lat,
+        #                     'lng': lng,
+        #                     'heat': freq
+        #                 })
+        #             if 0 < depth:
+        #                 depth_heatmap.append({
+        #                     'lat': lat,
+        #                     'lng': lng,
+        #                     'heat': depth
+        #                 })
+        #     detail['mag_heatmaps'].append(mag_heatmap)
+        #     detail['freq_heatmaps'].append(freq_heatmap)
+        #     detail['depth_heatmaps'].append(depth_heatmap)
         max_mag = 0
         for eq in info_test[i]['earthquakes']:
             detail['earthquakes'].append({
