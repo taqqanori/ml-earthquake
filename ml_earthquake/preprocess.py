@@ -17,7 +17,7 @@ def preprocess(
     predict_center_lng,
     predict_radius_meters,
     threshold_mag,
-    num_points=1000,
+    num_points=100,
     normalize_max_mag=10.0,
     normalize_max_depth=500,
     for_prediction=False,

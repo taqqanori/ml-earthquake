@@ -6,15 +6,15 @@
                 "ja": "東京",
                 "en": "Tokyo"
             },
-            "window_days": 90,
-            "predict_range_days": 15,
+            "window_days": 30,
+            "predict_range_days": 7,
             "predict_center_lat": 35.680934,
             "predict_center_lng": 139.767551,
             "predict_radius_meters": 300000,
-            "threshold_mag": 5.5,
+            "threshold_mag": 6.0,
             "test_ratio": 0.25,
             "learning_rate": 5e-6,
-            "epochs": 50,
+            "epochs": 100,
             "dropout": 0.3,
             "resampling_methods": [
                 {
