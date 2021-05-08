@@ -116,51 +116,52 @@ def _model(X):
     # ------------------------------------ Pointnet Architecture
     # input_Transformation_net
     input_points = Input(shape=(num_points, num_features))
-    x = Convolution1D(64, 1, activation='relu',
-                    input_shape=(num_points, num_features))(input_points)
-    x = BatchNormalization()(x)
-    x = Convolution1D(128, 1, activation='relu')(x)
-    x = BatchNormalization()(x)
-    x = Convolution1D(1024, 1, activation='relu')(x)
-    x = BatchNormalization()(x)
-    x = MaxPooling1D(pool_size=num_points)(x)
-    x = Dense(512, activation='relu')(x)
-    x = BatchNormalization()(x)
-    x = Dense(256, activation='relu')(x)
-    x = BatchNormalization()(x)
-    x = Dense(
-        num_features * num_features, 
-        weights=[
-            np.zeros([256, num_features * num_features]), 
-            np.eye(num_features).flatten().astype(np.float32)
-        ]
-    )(x)
-    input_T = Reshape((num_features, num_features))(x)
+    # x = Convolution1D(64, 1, activation='relu',
+    #                 input_shape=(num_points, num_features))(input_points)
+    # x = BatchNormalization()(x)
+    # x = Convolution1D(128, 1, activation='relu')(x)
+    # x = BatchNormalization()(x)
+    # x = Convolution1D(1024, 1, activation='relu')(x)
+    # x = BatchNormalization()(x)
+    # x = MaxPooling1D(pool_size=num_points)(x)
+    # x = Dense(512, activation='relu')(x)
+    # x = BatchNormalization()(x)
+    # x = Dense(256, activation='relu')(x)
+    # x = BatchNormalization()(x)
+    # x = Dense(
+    #     num_features * num_features, 
+    #     weights=[
+    #         np.zeros([256, num_features * num_features]), 
+    #         np.eye(num_features).flatten().astype(np.float32)
+    #     ]
+    # )(x)
+    # input_T = Reshape((num_features, num_features))(x)
 
     # forward net
-    g = Lambda(mat_mul, arguments={'B': input_T})(input_points)
-    g = Convolution1D(64, 1, input_shape=(num_points, num_features), activation='relu')(g)
+    # g = Lambda(mat_mul, arguments={'B': input_T})(input_points)
+    # g = Convolution1D(64, 1, input_shape=(num_points, num_features), activation='relu')(g)
+    g = Convolution1D(64, 1, input_shape=(num_points, num_features), activation='relu')(input_points)
     g = BatchNormalization()(g)
     g = Convolution1D(64, 1, input_shape=(num_points, num_features), activation='relu')(g)
     g = BatchNormalization()(g)
 
     # feature transform net
-    f = Convolution1D(64, 1, activation='relu')(g)
-    f = BatchNormalization()(f)
-    f = Convolution1D(128, 1, activation='relu')(f)
-    f = BatchNormalization()(f)
-    f = Convolution1D(1024, 1, activation='relu')(f)
-    f = BatchNormalization()(f)
-    f = MaxPooling1D(pool_size=num_points)(f)
-    f = Dense(512, activation='relu')(f)
-    f = BatchNormalization()(f)
-    f = Dense(256, activation='relu')(f)
-    f = BatchNormalization()(f)
-    f = Dense(64 * 64, weights=[np.zeros([256, 64 * 64]), np.eye(64).flatten().astype(np.float32)])(f)
-    feature_T = Reshape((64, 64))(f)
+    # f = Convolution1D(64, 1, activation='relu')(g)
+    # f = BatchNormalization()(f)
+    # f = Convolution1D(128, 1, activation='relu')(f)
+    # f = BatchNormalization()(f)
+    # f = Convolution1D(1024, 1, activation='relu')(f)
+    # f = BatchNormalization()(f)
+    # f = MaxPooling1D(pool_size=num_points)(f)
+    # f = Dense(512, activation='relu')(f)
+    # f = BatchNormalization()(f)
+    # f = Dense(256, activation='relu')(f)
+    # f = BatchNormalization()(f)
+    # f = Dense(64 * 64, weights=[np.zeros([256, 64 * 64]), np.eye(64).flatten().astype(np.float32)])(f)
+    # feature_T = Reshape((64, 64))(f)
 
     # forward net
-    g = Lambda(mat_mul, arguments={'B': feature_T})(g)
+    # g = Lambda(mat_mul, arguments={'B': feature_T})(g)
     g = Convolution1D(64, 1, activation='relu')(g)
     g = BatchNormalization()(g)
     g = Convolution1D(128, 1, activation='relu')(g)
