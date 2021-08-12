@@ -1,3 +1,4 @@
+from ml_earthquake.pointcloud_k_neighbors import PointCloudKNeighborRegressor
 import os, json
 import numpy as np
 import random as rn
@@ -56,144 +57,25 @@ def train(
     random_state=4126):
     if out_dir is not None:
         os.makedirs(out_dir, exist_ok=True)
-
-    model = _model(X_train)
-    model.summary()
-
-    reporter = _Reporter(X_test, y_test)
-    callbacks = [reporter]
-
-    model_path = None
-    if out_dir is not None:
-        model_path = os.path.join(out_dir, model_file_name)
-        callbacks.append(
-            ModelCheckpoint(filepath=model_path, verbose=1, save_best_only=True, save_weights_only=True)
-        )
-
-    if log_dir is not None:
-        log_path = os.path.join(log_dir, datetime.now().strftime(date_format + '_%H%M%S'))
-        callbacks.append(TensorBoard(log_dir=log_path))
     
     positive = (0.5 <= y_train).sum()
     negative = (y_train < 0.5).sum()
     print('train data balance P:{} : N:{}'.format(positive, negative))
-    class_weight = {
-        0: positive / (positive + negative),
-        1: negative / (positive + negative),
-    } if use_class_weight else None
 
     if resampling_methods is not None:
         for resampling_method in resampling_methods:
             X_train, y_train = _resample(X_train, y_train, resampling_method, random_state)
 
-    if balanced_batch == True:
-        print('using BalancedBatchGenerator')
-        batch_gen = BalancedBatchGenerator(\
-            X_train, y_train, \
-            sampler=RandomUnderSamplerWrapper(), random_state=random_state)
-        model.fit_generator(generator=batch_gen, \
-            epochs=epochs, callbacks=callbacks, \
-            validation_data=(X_test, y_test),
-            class_weight=class_weight)
-    else:
-        model.fit(X_train, y_train, \
-            epochs=epochs, callbacks=callbacks, \
-            validation_data=(X_test, y_test),
-            class_weight=class_weight)
+    model = PointCloudKNeighborRegressor()
+    model.fit(X_train, y_train)
     
     if out_dir is not None and info_train is not None and info_test is not None:
-        _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter)
-
-
-def _model(X):
-
-    num_points = X.shape[1]
-    num_features = X.shape[2]
-
-    # define optimizer
-    adam = Adam(lr=0.001, decay=0.7)
-
-    # ------------------------------------ Pointnet Architecture
-    # input_Transformation_net
-    input_points = Input(shape=(num_points, num_features))
-    # x = Convolution1D(64, 1, activation='relu',
-    #                 input_shape=(num_points, num_features))(input_points)
-    # x = BatchNormalization()(x)
-    # x = Convolution1D(128, 1, activation='relu')(x)
-    # x = BatchNormalization()(x)
-    # x = Convolution1D(1024, 1, activation='relu')(x)
-    # x = BatchNormalization()(x)
-    # x = MaxPooling1D(pool_size=num_points)(x)
-    # x = Dense(512, activation='relu')(x)
-    # x = BatchNormalization()(x)
-    # x = Dense(256, activation='relu')(x)
-    # x = BatchNormalization()(x)
-    # x = Dense(
-    #     num_features * num_features, 
-    #     weights=[
-    #         np.zeros([256, num_features * num_features]), 
-    #         np.eye(num_features).flatten().astype(np.float32)
-    #     ]
-    # )(x)
-    # input_T = Reshape((num_features, num_features))(x)
-
-    # forward net
-    # g = Lambda(mat_mul, arguments={'B': input_T})(input_points)
-    # g = Convolution1D(64, 1, input_shape=(num_points, num_features), activation='relu')(g)
-    g = Convolution1D(64, 1, input_shape=(num_points, num_features), activation='relu')(input_points)
-    g = BatchNormalization()(g)
-    g = Convolution1D(64, 1, input_shape=(num_points, num_features), activation='relu')(g)
-    g = BatchNormalization()(g)
-
-    # feature transform net
-    # f = Convolution1D(64, 1, activation='relu')(g)
-    # f = BatchNormalization()(f)
-    # f = Convolution1D(128, 1, activation='relu')(f)
-    # f = BatchNormalization()(f)
-    # f = Convolution1D(1024, 1, activation='relu')(f)
-    # f = BatchNormalization()(f)
-    # f = MaxPooling1D(pool_size=num_points)(f)
-    # f = Dense(512, activation='relu')(f)
-    # f = BatchNormalization()(f)
-    # f = Dense(256, activation='relu')(f)
-    # f = BatchNormalization()(f)
-    # f = Dense(64 * 64, weights=[np.zeros([256, 64 * 64]), np.eye(64).flatten().astype(np.float32)])(f)
-    # feature_T = Reshape((64, 64))(f)
-
-    # forward net
-    # g = Lambda(mat_mul, arguments={'B': feature_T})(g)
-    g = Convolution1D(64, 1, activation='relu')(g)
-    g = BatchNormalization()(g)
-    g = Convolution1D(128, 1, activation='relu')(g)
-    g = BatchNormalization()(g)
-    g = Convolution1D(1024, 1, activation='relu')(g)
-    g = BatchNormalization()(g)
-
-    # global_feature
-    global_feature = MaxPooling1D(pool_size=num_points)(g)
-
-    # point_net_cls
-    c = Dense(512, activation='relu')(global_feature)
-    c = BatchNormalization()(c)
-    c = Dropout(rate=0.7)(c)
-    c = Dense(256, activation='relu')(c)
-    c = BatchNormalization()(c)
-    c = Dropout(rate=0.7)(c)
-    c = Dense(1, activation='sigmoid')(c)
-    prediction = Flatten()(c)
-    # --------------------------------------------------end of pointnet
-
-    # print the model summary
-    model = Model(inputs=input_points, outputs=prediction)
-    model.compile(optimizer=adam, loss='binary_crossentropy', metrics=["accuracy"])
-
-    return model
+        _output(out_dir, X_test, y_test, info_train, info_test, model)
 
     
-def _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter):
-    best_model = _model(X_test)
-    best_model.load_weights(model_path)
-    acc, auc, f1, precision, recall, tp, fn, fp, tn = _eval(best_model, X_test, y_test)
+def _output(out_dir, X_test, y_test, info_train, info_test, model):
+    y_pred = model.predict(X_test)
+    acc, auc, f1, precision, recall, tp, fn, fp, tn = _eval(X_test, y_test, y_pred)
 
     # summary
     summary = {
@@ -206,10 +88,6 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter
         'fn': int(fn),
         'fp': int(fp),
         'tn': int(tn),
-        'train_acc': reporter.acc,
-        'train_val_acc': reporter.val_acc,
-        'loss': reporter.loss,
-        'val_loss': reporter.val_loss,
         'train_start_date': info_train[0]['window_start'].strftime(date_format),
         'train_end_date': info_train[-1]['predict_end'].strftime(date_format),
         'test_start_date': info_test[0]['window_start'].strftime(date_format),
@@ -219,7 +97,6 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter
 
     # validations
     validations = []
-    y_pred = best_model.predict(X_test).reshape(-1)
     for i in range(0, len(y_test)):
         predict_center_lat = float(info_test[i]['predict_center_lat'])
         predict_center_lng = float(info_test[i]['predict_center_lng'])
@@ -360,36 +237,7 @@ def _dump(o, path):
     with open(path, 'w') as f:
         json.dump(o, f)
 
-class _Reporter(Callback):
-
-    def __init__(self, X_test, y_test, monitor='val_loss', best_only=True):
-        self.X_test = X_test
-        self.y_test = y_test
-        self.monitor = monitor
-        self.best_only = best_only
-        self.best = np.inf
-        self.acc = []
-        self.val_acc = []
-        self.loss = []
-        self.val_loss = []
-
-    def on_epoch_end(self, epoch, logs={}):
-        self.acc.append(float(logs.get('accuracy')))
-        self.val_acc.append(float(logs.get('val_accuracy')))
-        self.loss.append(float(logs.get('loss')))
-        self.val_loss.append(float(logs.get('val_loss')))
-        if self.best_only:
-            score = logs.get(self.monitor)
-            if self.best < score:
-                return
-            self.best = score
-        acc, auc, f1, precision, recall, tp, fn, fp, tn = _eval(self.model, self.X_test, self.y_test)
-        print('Epoch {}: AUC: {:.3f}, F1: {:.3f}, acc: {:.3f}, precision: {:.3f}, recall: {:.3f}, TP: {}, FN: {}, FP: {}, TN: {}'.format(\
-            epoch + 1, auc, f1, acc, precision, recall, tp, fn, fp, tn
-        ))
-
-def _eval(model, X_test, y_test):
-    y_pred = model.predict(X_test).reshape(-1)
+def _eval(X_test, y_test, y_pred):
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred >= 0.5).ravel()
     auc = roc_auc_score(y_test, y_pred)
     f1 = (2 * tp) / (2 * tp + fp + fn)
