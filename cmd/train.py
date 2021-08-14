@@ -59,6 +59,7 @@ def main(
                 r['predict_range_days'],
                 r['lat_granularity'],
                 r['lng_granularity'],
+                r['depth_granularity'],
                 r['predict_center_lat'],
                 r['predict_center_lng'],
                 r['predict_radius_meters'],

@@ -1,17 +1,8 @@
+from ml_earthquake.k_neighbors_adapter import KNeighborsAdapter
 import os, json
 import numpy as np
-import random as rn
-import tensorflow as tf
-from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, roc_auc_score
-from keras.callbacks import Callback
-from keras.models import Sequential, load_model
-from keras.layers.convolutional_recurrent import ConvLSTM2D
-from keras.layers.normalization import BatchNormalization
-from keras.optimizers import Adam
-from keras.layers.core import Dense, Activation, Dropout, Flatten
-from keras.callbacks import TensorBoard, ModelCheckpoint
-from datetime import datetime
+from sklearn.neighbors import KNeighborsClassifier
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import (
     RandomUnderSampler,
@@ -23,7 +14,6 @@ from imblearn.under_sampling import (
     AllKNN,
     NeighbourhoodCleaningRule,
 )
-from imblearn.keras import BalancedBatchGenerator
 
 date_format = '%Y%m%d'
 
@@ -48,76 +38,20 @@ def train(
     if out_dir is not None:
         os.makedirs(out_dir, exist_ok=True)
 
-    model = Sequential()
-
-    model.add(ConvLSTM2D(
-        input_shape=(X_train.shape[1], X_train.shape[2], X_train.shape[3], X_train.shape[4]),
-        filters=30,
-        kernel_size=(3, 3),
-        padding='same',
-        dropout=dropout,
-        return_sequences=False
-    ))
-    model.add(BatchNormalization())
-
-    model.add(Flatten())
-
-    model.add(Dense(100, activation='relu'))
-    model.add(Dropout(dropout))
-
-    model.add(Dense(1, activation='sigmoid'))
-
-    adam = Adam(lr=learning_rate, decay=decay)
-    model.compile(optimizer=adam, loss='binary_crossentropy', metrics=["accuracy"])
-    model.summary()
-
-    reporter = _Reporter(X_test, y_test)
-    callbacks = [reporter]
-
-    model_path = None
-    if out_dir is not None:
-        model_path = os.path.join(out_dir, model_file_name)
-        callbacks.append(
-            ModelCheckpoint(filepath=model_path, verbose=1, save_best_only=True)
-        )
-
-    if log_dir is not None:
-        log_path = os.path.join(log_dir, datetime.now().strftime(date_format + '_%H%M%S'))
-        callbacks.append(TensorBoard(log_dir=log_path))
-    
-    positive = (0.5 <= y_train).sum()
-    negative = (y_train < 0.5).sum()
-    print('train data balance P:{} : N:{}'.format(positive, negative))
-    class_weight = {
-        0: positive / (positive + negative),
-        1: negative / (positive + negative),
-    } if use_class_weight else None
+    model = KNeighborsAdapter()
 
     if resampling_methods is not None:
         for resampling_method in resampling_methods:
             X_train, y_train = _resample(X_train, y_train, resampling_method, random_state)
 
-    if balanced_batch == True:
-        print('using BalancedBatchGenerator')
-        batch_gen = BalancedBatchGenerator(\
-            X_train, y_train, \
-            sampler=RandomUnderSamplerWrapper(), random_state=random_state)
-        model.fit_generator(generator=batch_gen, \
-            epochs=epochs, callbacks=callbacks, \
-            validation_data=(X_test, y_test),
-            class_weight=class_weight)
-    else:
-        model.fit(X_train, y_train, \
-            epochs=epochs, callbacks=callbacks, \
-            validation_data=(X_test, y_test),
-            class_weight=class_weight)
+    model.fit(X_train, y_train)
     
     if out_dir is not None and info_train is not None and info_test is not None:
-        _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter)
+        _output(model, out_dir, X_train, y_train, X_test, y_test, info_train, info_test)
     
-def _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter):
-    best_model = load_model(model_path)
-    acc, auc, f1, precision, recall, tp, fn, fp, tn = _eval(best_model, X_test, y_test)
+def _output(model, out_dir, X_train, y_train, X_test, y_test, info_train, info_test):
+    acc, auc, f1, precision, recall, tp, fn, fp, tn = _eval(model, X_test, y_test)
+    train_acc, _, _, _, _, _, _, _, _ = _eval(model, X_train, y_train)
 
     # summary
     summary = {
@@ -130,10 +64,7 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter
         'fn': int(fn),
         'fp': int(fp),
         'tn': int(tn),
-        'train_acc': reporter.acc,
-        'train_val_acc': reporter.val_acc,
-        'loss': reporter.loss,
-        'val_loss': reporter.val_loss,
+        'train_acc': train_acc,
         'train_start_date': info_train[0]['window_start'].strftime(date_format),
         'train_end_date': info_train[-1]['predict_end'].strftime(date_format),
         'test_start_date': info_test[0]['window_start'].strftime(date_format),
@@ -143,7 +74,7 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter
 
     # validations
     validations = []
-    y_pred = best_model.predict(X_test).reshape(-1)
+    y_pred = model.predict(X_test)
     for i in range(0, len(y_test)):
         predict_center_lat = float(info_test[i]['predict_center_lat'])
         predict_center_lng = float(info_test[i]['predict_center_lng'])
@@ -174,41 +105,41 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter
             'mag_heatmaps': [],
             'freq_heatmaps': [],
             'depth_heatmaps': [],
-            'lat_gap': 180 / X_test[i].shape[1],
-            'lng_gap': 360 / X_test[i].shape[2],
+            'lat_gap': 180 / X_test[i].shape[0],
+            'lng_gap': 360 / X_test[i].shape[1],
             'threshold_mag': info_test[i]['threshold_mag'],
             'earthquakes': []
         }
-        for win in range(X_test[i].shape[0]):
-            mag_heatmap = []
-            freq_heatmap = []
-            depth_heatmap = []
-            for lat in range(X_test[i].shape[1]):
-                for lng in range(X_test[i].shape[2]):
-                    mag = X_test[i][win][lat][lng][0]
-                    freq = X_test[i][win][lat][lng][1]
-                    depth = X_test[i][win][lat][lng][2]
-                    if 0 < mag:
-                        mag_heatmap.append({
-                            'lat': lat,
-                            'lng': lng,
-                            'heat': mag
-                        })
-                    if 0 < freq:
-                        freq_heatmap.append({
-                            'lat': lat,
-                            'lng': lng,
-                            'heat': freq
-                        })
-                    if 0 < depth:
-                        depth_heatmap.append({
-                            'lat': lat,
-                            'lng': lng,
-                            'heat': depth
-                        })
-            detail['mag_heatmaps'].append(mag_heatmap)
-            detail['freq_heatmaps'].append(freq_heatmap)
-            detail['depth_heatmaps'].append(depth_heatmap)
+        # for win in range(X_test[i].shape[0]):
+        #     mag_heatmap = []
+        #     freq_heatmap = []
+        #     depth_heatmap = []
+        #     for lat in range(X_test[i].shape[1]):
+        #         for lng in range(X_test[i].shape[2]):
+        #             mag = X_test[i][win][lat][lng][0]
+        #             freq = X_test[i][win][lat][lng][1]
+        #             depth = X_test[i][win][lat][lng][2]
+        #             if 0 < mag:
+        #                 mag_heatmap.append({
+        #                     'lat': lat,
+        #                     'lng': lng,
+        #                     'heat': mag
+        #                 })
+        #             if 0 < freq:
+        #                 freq_heatmap.append({
+        #                     'lat': lat,
+        #                     'lng': lng,
+        #                     'heat': freq
+        #                 })
+        #             if 0 < depth:
+        #                 depth_heatmap.append({
+        #                     'lat': lat,
+        #                     'lng': lng,
+        #                     'heat': depth
+        #                 })
+        #     detail['mag_heatmaps'].append(mag_heatmap)
+        #     detail['freq_heatmaps'].append(freq_heatmap)
+        #     detail['depth_heatmaps'].append(depth_heatmap)
         max_mag = 0
         for eq in info_test[i]['earthquakes']:
             detail['earthquakes'].append({
@@ -288,36 +219,8 @@ def _dump(o, path):
     with open(path, 'w') as f:
         json.dump(o, f)
 
-class _Reporter(Callback):
-
-    def __init__(self, X_test, y_test, monitor='val_loss', best_only=True):
-        self.X_test = X_test
-        self.y_test = y_test
-        self.monitor = monitor
-        self.best_only = best_only
-        self.best = np.inf
-        self.acc = []
-        self.val_acc = []
-        self.loss = []
-        self.val_loss = []
-
-    def on_epoch_end(self, epoch, logs={}):
-        self.acc.append(float(logs.get('accuracy')))
-        self.val_acc.append(float(logs.get('val_accuracy')))
-        self.loss.append(float(logs.get('loss')))
-        self.val_loss.append(float(logs.get('val_loss')))
-        if self.best_only:
-            score = logs.get(self.monitor)
-            if self.best < score:
-                return
-            self.best = score
-        acc, auc, f1, precision, recall, tp, fn, fp, tn = _eval(self.model, self.X_test, self.y_test)
-        print('Epoch {}: AUC: {:.3f}, F1: {:.3f}, acc: {:.3f}, precision: {:.3f}, recall: {:.3f}, TP: {}, FN: {}, FP: {}, TN: {}'.format(\
-            epoch + 1, auc, f1, acc, precision, recall, tp, fn, fp, tn
-        ))
-
 def _eval(model, X_test, y_test):
-    y_pred = model.predict(X_test).reshape(-1)
+    y_pred = model.predict(X_test)
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred >= 0.5).ravel()
     auc = roc_auc_score(y_test, y_pred)
     f1 = (2 * tp) / (2 * tp + fp + fn)

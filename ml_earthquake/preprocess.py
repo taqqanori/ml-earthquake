@@ -11,13 +11,15 @@ def preprocess(
     predict_range_days,
     lat_granularity,
     lng_granularity,
+    depth_granularity,
     predict_center_lat,
     predict_center_lng,
     predict_radius_meters,
     threshold_mag,
     normalize_max_mag=10.0,
     normalize_max_freq=100,
-    normalize_max_depth=500,
+    max_depth=800,
+    window_decay=0.9,
     for_prediction=False,
     test_ratio=0.25,
     cache_dir=None,
@@ -30,10 +32,11 @@ def preprocess(
     cache_info_path = None
     if cache_dir is not None:
         os.makedirs(cache_dir, exist_ok=True)
-        cache_X_path = os.path.join(cache_dir, 'X_{}_{}_{}_{}.npy'.format(
+        cache_X_path = os.path.join(cache_dir, 'X_{}_{}_{}_{}_{}.npy'.format(
             window_days,
             lat_granularity,
             lng_granularity,
+            depth_granularity,
             predict_range_days,
         ))
         y_info_id = '{}_{}_{}_{}_{}_{}'.format(
@@ -58,6 +61,7 @@ def preprocess(
 
     lat_gap = 180 / lat_granularity
     lng_gap = 360 / lng_granularity
+    depth_gap = max_depth / depth_granularity
     
     X = []
     y = []
@@ -82,7 +86,7 @@ def preprocess(
             date = _midnight(df.index.min())
             if show_progress:
                 progress = tqdm(total=int((datetime.now(date.tzinfo) - date) // timedelta(days=1)))
-            x = np.zeros([lat_granularity, lng_granularity, 3])
+            x = np.zeros([lat_granularity, lng_granularity, depth_granularity, 2])
             _y = False
             eq = []
         
@@ -93,14 +97,14 @@ def preprocess(
                 if show_progress:
                     progress.update()
                 _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf,\
-                        predict_center_lat, predict_center_lng, window_days, predict_range_days, threshold_mag)
-                x = np.zeros([lat_granularity, lng_granularity, 3])
+                        predict_center_lat, predict_center_lng, window_days, window_decay, predict_range_days, threshold_mag)
+                x = np.zeros([lat_granularity, lng_granularity, depth_granularity, 2])
                 _y = False
                 eq = []
                 for i in range(int((_midnight(d) - _midnight(date)) // timedelta(days=1))):
                     # blank days
                     _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf,\
-                        predict_center_lat, predict_center_lng, window_days, predict_range_days, threshold_mag)
+                        predict_center_lat, predict_center_lng, window_days, window_decay, predict_range_days, threshold_mag)
                     date += timedelta(days=1)
                     if show_progress:
                         progress.update()
@@ -108,14 +112,11 @@ def preprocess(
             # x
             lat_index = min(int((row['latitude'] - (-90)) // lat_gap), lat_granularity - 1)
             lng_index = min(int((row['longitude'] - (-180) - predict_center_lng) // lng_gap), lng_granularity - 1)
+            depth_index = min(int(max(0, row['depth']) // depth_gap), depth_granularity - 1)
             # ch1: magnitude
-            x[lat_index, lng_index, 0] = _sum_mag(row['mag'], x[lat_index, lng_index, 0])
+            x[lat_index, lng_index, depth_index, 0] = _sum_mag(row['mag'], x[lat_index, lng_index, depth_index, 0])
             # ch2: frequency
-            x[lat_index, lng_index, 1] += 1
-            # ch3: average depth
-            avg = x[lat_index, lng_index, 2]
-            count = x[lat_index, lng_index, 1]
-            x[lat_index, lng_index, 2] = avg * ((count - 1) / count) + (row['depth'] / count)
+            x[lat_index, lng_index, depth_index, 1] += 1
 
             # y
             distance = _distance(row['latitude'], row['longitude'], predict_center_lat, predict_center_lng)
@@ -133,17 +134,17 @@ def preprocess(
 
     # the last day
     _append(date, X, y, info, x, _y, eq, X_buf, y_buf, eq_buf, \
-        predict_center_lat, predict_center_lng, window_days, predict_range_days, threshold_mag)
+        predict_center_lat, predict_center_lng, window_days, window_decay, predict_range_days, threshold_mag)
 
     if for_prediction:
+        # TODO
         X.append(np.array(X_buf[0:window_days]))
 
     X = np.array(X)
     # normalize
     maxes = [
         normalize_max_mag,
-        normalize_max_freq,
-        normalize_max_depth
+        normalize_max_freq
     ]
     for i in range(0, X.shape[-1]):
         X[:,:,:,:,i] = np.clip(X[:,:,:,:,i] / maxes[i], 0, 1.0)
@@ -173,8 +174,10 @@ def _append(
     predict_center_lat,
     predict_center_lng,
     window_days,
+    window_decay,
     predict_range_days,
     threshold_mag):
+
     X_buf.append(x)
     y_buf.append(_y)
     eq_buf.append(eq)
@@ -185,7 +188,12 @@ def _append(
         if predict_range_days < len(eq_buf):
             eq_buf.pop(0)
         return
-    X.append(np.array(X_buf[0:window_days]))
+
+    x_agg = np.zeros_like(x)
+    for i in range(window_days):
+        x_agg += pow(window_decay, i) * X_buf[i]
+    X.append(x_agg)
+
     X_buf.pop(0)
     y_buf.pop(0)
     eq_buf.pop(0)
