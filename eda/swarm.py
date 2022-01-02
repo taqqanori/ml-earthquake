@@ -24,7 +24,7 @@ def swarm(date_range = 7, count_range = 10, lat_range=0.001, lng_range=0.001):
     progress = None
     buff = []
     swarms = []
-    with open('data/swarms.csv', 'w') as f:
+    with open('data/swarms.csv', 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['date', 'latitude', 'longitude', 'count', 'average magnitude'])
         for df in pd.read_csv('data/earthquakes.csv', parse_dates=['time'], index_col=0, chunksize=100):
@@ -42,27 +42,28 @@ def swarm(date_range = 7, count_range = 10, lat_range=0.001, lng_range=0.001):
                 if date.day != d.day:
                     # came to next (or later) day
                     _out(writer, swarms, date, date_range, count_range)
+                    for i in range(int((_midnight(d) - _midnight(date)) // timedelta(days=1))):
+                        # blank days
+                        date += timedelta(days=1)
+                        limit_date = date - timedelta(days=date_range)
+                        buff = [b for b in buff if limit_date <= b['time']]
+                        progress.update()
                 found = False
                 for swarm in swarms:
                     if abs(swarm.lat - row['latitude']) <= lat_range and abs(swarm.lng - row['longitude']) <= lng_range:
                         swarm.add(_row_with_time(d, row))
                         found = True
-                for b in buff:
-                    if abs(b['latitude'] - row['latitude']) <= lat_range and abs(b['longitude'] - row['longitude']) <= lng_range:
-                        swarm = Swarm(_row_with_time(d, row))
-                        swarm.add(b)
-                        swarms.append(swarm)
-                        found = True
                         break
                 if not found:
+                    for b in buff:
+                        if abs(b['latitude'] - row['latitude']) <= lat_range and abs(b['longitude'] - row['longitude']) <= lng_range:
+                            swarm = Swarm(_row_with_time(d, row))
+                            swarm.add(b)
+                            swarms.append(swarm)
+                            found = True
+                            break
+                if not found:
                     buff.append(_row_with_time(d, row))
-
-            for i in range(int((_midnight(d) - _midnight(date)) // timedelta(days=1))):
-                # blank days
-                date += timedelta(days=1)
-                limit_date = date - timedelta(days=date_range)
-                buff = [b for b in buff if limit_date <= b['time']]
-                progress.update()
 
         # last day
         _out(writer, swarms, date, date_range, count_range)
