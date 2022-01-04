@@ -6,29 +6,28 @@ from datetime import datetime, timedelta
 sys.path.append(os.getcwd())
 from ml_earthquake.preprocess import _midnight
 
-class Swarm:
-    def __init__(self, earthquake):
+class _TimeRowSet:
+    def __init__(self, time, row):
+        self.time = time
+        self.row = row
+class _Swarm:
+    def __init__(self, earthquake: _TimeRowSet):
         self.lat = earthquake.row['latitude']
         self.lng = earthquake.row['longitude']
         self.totalCount = 0
         self.earthquakes = [earthquake]
 
-    def add(self, earthquake):
+    def add(self, earthquake: _TimeRowSet):
         self.totalCount += 1
         self.lat = ((self.totalCount - 1) / self.totalCount) * self.lat + earthquake.row['latitude'] / self.totalCount
         self.lng = ((self.totalCount - 1) / self.totalCount) * self.lng + earthquake.row['longitude'] / self.totalCount
         self.earthquakes.append(earthquake)
 
-class TimeRowSet:
-    def __init__(self, time, row):
-        self.time = time
-        self.row = row
-
-def swarm(date_range=7, count_range=10, lat_range=0.001, lng_range=0.001, min_mag=2.0):
+def swarm(date_range=7, count_range=10, lat_range=0.005, lng_range=0.005, min_mag=2.0):
     date = None
     progress = None
-    buff = []
-    swarms = []
+    buff: list[_Swarm] = []
+    swarms: list[_Swarm] = []
     with open('data/swarms.csv', 'w', newline='') as f:
         writer = csv.writer(f)
         writer.writerow(['location id', 'date', 'latitude', 'longitude', 'count', 'average magnitude'])
@@ -53,28 +52,34 @@ def swarm(date_range=7, count_range=10, lat_range=0.001, lng_range=0.001, min_ma
                     for i in range(int((_midnight(d) - _midnight(date)) // timedelta(days=1))):
                         # blank days
                         date += timedelta(days=1)
-                        limit_date = date - timedelta(days=date_range)
-                        buff = [b for b in buff if limit_date <= b.time]
                         progress.update()
+                    limit_date = date - timedelta(days=date_range)
+                    _remove_earthquakes_before(limit_date, swarms)
+                    _remove_earthquakes_before(limit_date, buff)
+                    buff = [b for b in buff if 0 <= len(b.earthquakes)]
                 found = False
                 for swarm in swarms:
-                    if abs(swarm.lat - row['latitude']) <= lat_range and abs(swarm.lng - row['longitude']) <= lng_range:
-                        swarm.add(TimeRowSet(d, row))
+                    if _is_same_location(swarm, row, lat_range, lng_range):
+                        swarm.add(_TimeRowSet(d, row))
                         found = True
                         break
                 if not found:
                     for b in buff:
-                        if abs(b.row['latitude'] - row['latitude']) <= lat_range and abs(b.row['longitude'] - row['longitude']) <= lng_range:
-                            swarm = Swarm(TimeRowSet(d, row))
-                            swarm.add(TimeRowSet(d, row))
-                            swarms.append(swarm)
+                        if _is_same_location(b, row, lat_range, lng_range):
+                            b.add(_TimeRowSet(d, row))
+                            if count_range <= len(b.earthquakes):
+                                swarms.append(b)
+                                buff.remove(b)
                             found = True
                             break
                 if not found:
-                    buff.append(TimeRowSet(d, row))
+                    buff.append(_Swarm(_TimeRowSet(d, row)))
 
         # last day
         _out(writer, swarms, date, date_range, count_range)
+
+def _is_same_location(swarm: _Swarm, row, lat_range, lng_range) -> bool:
+    return abs(swarm.lat - row['latitude']) <= lat_range and abs(swarm.lng - row['longitude']) <= lng_range
 
 def _out(writer, swarms, date, date_range, count_range):
     for i, swarm in enumerate(swarms):
@@ -84,8 +89,10 @@ def _out(writer, swarms, date, date_range, count_range):
                 avg += eq.row['mag']
             avg /= len(swarm.earthquakes)
             writer.writerow([i, date, swarm.lat, swarm.lng, len(swarm.earthquakes), avg])
-        limit_date = date - timedelta(date_range - 1)
-        swarm.earthquakes = [eq for eq in swarm.earthquakes if limit_date <= eq.time]
+
+def _remove_earthquakes_before(date, swarms: 'list[_Swarm]'):
+    for swarm in swarms:
+        swarm.earthquakes = [eq for eq in swarm.earthquakes if date <= eq.time]
 
 if __name__ == '__main__':
     swarm()
