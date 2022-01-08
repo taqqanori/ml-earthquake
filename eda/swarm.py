@@ -54,7 +54,7 @@ class _SwarmArea:
                 buf = [b for b in buf if limit_date <= b['time']]
             buf.append(eq)
 
-def swarm(date_range=7, count_range=10, lat_range=0.005, lng_range=0.005):
+def swarm(date_range=7, count_range=10, lat_range=1, lng_range=1):
     df = pd.read_csv('data/earthquakes.csv', parse_dates=['time'])
     df = df[df['type'] == 'earthquake']
     df['time'] = df['time'].dt.tz_convert('Asia/Tokyo')
@@ -76,6 +76,8 @@ def swarm(date_range=7, count_range=10, lat_range=0.005, lng_range=0.005):
             if not found:
                 areas.append(_SwarmArea(row, date_range, count_range, lat_range, lng_range))
             progress.update()
+        for area in areas:
+            area.output(writer)
 
 if __name__ == '__main__':
     swarm()
