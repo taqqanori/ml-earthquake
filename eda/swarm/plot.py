@@ -1,10 +1,9 @@
 import pandas as pd
 import matplotlib.pyplot as plt
 import geopandas as gpd
-from tqdm import tqdm
 
 def swarm_plot():
-    fig, ax = plt.subplots(figsize=(8,6))
+    _, ax = plt.subplots(figsize=(8,6))
     countries = gpd.read_file(gpd.datasets.get_path('naturalearth_lowres'))
     countries.plot(color='lightgrey', ax=ax)
     df = pd.read_csv('data/swarms.csv')

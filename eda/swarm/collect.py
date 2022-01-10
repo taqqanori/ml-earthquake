@@ -1,7 +1,7 @@
 import sys, os, csv
 import pandas as pd
 from tqdm import tqdm
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 sys.path.append(os.getcwd())
 from ml_earthquake.preprocess import _midnight
