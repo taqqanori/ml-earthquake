@@ -5,7 +5,14 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, roc_auc_score
 
 def xgb(col):
-    y_labels = ['Tokyo M4', 'Tokyo M5']
+    y_labels = [
+        'Tokyo 200km M4',
+        'Tokyo 200km M5',
+        'Tokyo 500km M4',
+        'Tokyo 500km M5',
+        'Tokyo 1000km M4',
+        'Tokyo 1000km M5'
+    ]
     df = pd.read_csv('data/swarms_table.csv')
     X = df
     for y_label in y_labels:
@@ -32,4 +39,4 @@ def xgb(col):
     plt.show()
 
 if __name__ == '__main__':
-    xgb('Tokyo M4')
+    xgb('Tokyo 200km M4')

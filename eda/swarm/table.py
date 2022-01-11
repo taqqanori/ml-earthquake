@@ -59,6 +59,10 @@ def swarm_table(areas: 'list[_PredictionArea]'):
 
 if __name__ == '__main__':
     swarm_table([
-        _PredictionArea('Tokyo M4', 35.680934, 139.767551, 200000, 4),
-        _PredictionArea('Tokyo M5', 35.680934, 139.767551, 200000, 5)
+        _PredictionArea('Tokyo 200km M4', 35.680934, 139.767551, 200000, 4),
+        _PredictionArea('Tokyo 200km M5', 35.680934, 139.767551, 200000, 5),
+        _PredictionArea('Tokyo 500km M4', 35.680934, 139.767551, 500000, 4),
+        _PredictionArea('Tokyo 500km M5', 35.680934, 139.767551, 500000, 5),
+        _PredictionArea('Tokyo 1000km M4', 35.680934, 139.767551, 1000000, 4),
+        _PredictionArea('Tokyo 1000km M5', 35.680934, 139.767551, 1000000, 5)
     ])
