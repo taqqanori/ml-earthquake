@@ -39,4 +39,4 @@ def xgb(col):
     plt.show()
 
 if __name__ == '__main__':
-    xgb('Tokyo 200km M4')
+    xgb('Tokyo 500km M4')
