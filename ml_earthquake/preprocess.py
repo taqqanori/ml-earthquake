@@ -147,6 +147,9 @@ def preprocess(
     ]
     for i in range(0, X.shape[-1]):
         X[:,:,:,:,i] = np.clip(X[:,:,:,:,i] / maxes[i], 0, 1.0)
+    
+    X = X.reshape(X.shape[0], X.shape[1], X.shape[2] * X.shape[3] * X.shape[4])
+    print(X.shape)
 
     if for_prediction:
         return X

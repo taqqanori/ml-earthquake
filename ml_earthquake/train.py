@@ -5,11 +5,9 @@ import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, roc_auc_score
 from keras.callbacks import Callback
-from keras.models import Sequential, load_model
-from keras.layers.convolutional_recurrent import ConvLSTM2D
-from keras.layers.normalization import BatchNormalization
+from keras.models import Model, load_model
+from keras.layers import Input, MultiHeadAttention, Flatten, Dense, Dropout
 from keras.optimizers import Adam
-from keras.layers.core import Dense, Activation, Dropout, Flatten
 from keras.callbacks import TensorBoard, ModelCheckpoint
 from datetime import datetime
 from imblearn.over_sampling import SMOTE
@@ -48,27 +46,18 @@ def train(
     if out_dir is not None:
         os.makedirs(out_dir, exist_ok=True)
 
-    model = Sequential()
-
-    model.add(ConvLSTM2D(
-        input_shape=(X_train.shape[1], X_train.shape[2], X_train.shape[3], X_train.shape[4]),
-        filters=30,
-        kernel_size=(3, 3),
-        padding='same',
-        dropout=dropout,
-        return_sequences=False
-    ))
-    model.add(BatchNormalization())
-
-    model.add(Flatten())
-
-    model.add(Dense(100, activation='relu'))
-    model.add(Dropout(dropout))
-
-    model.add(Dense(1, activation='sigmoid'))
-
-    adam = Adam(lr=learning_rate, decay=decay)
-    model.compile(optimizer=adam, loss='binary_crossentropy', metrics=["accuracy"])
+    inputs = Input(shape=(X_train.shape[1:]))
+    x = inputs
+    x = MultiHeadAttention(10, 10)(x, x)
+    x = Flatten()(x)
+    x = Dense(10000, activation='relu')(x)
+    x = Dropout(dropout)(x)
+    x = Dense(1000, activation='relu')(x)
+    x = Dropout(dropout)(x)
+    x = Dense(10, activation='relu')(x)
+    x = Dropout(dropout)(x)
+    x = Dense(1, activation='relu')(x)
+    model = Model(inputs=inputs, outputs=[x])
     model.summary()
 
     reporter = _Reporter(X_test, y_test)
