@@ -12,13 +12,13 @@ def set_random_seed(s):
     os.environ['PYTHONHASHSEED'] = '0'
     np.random.seed(s)
     rn.seed(s)
-    session_conf = tf.ConfigProto(
+    session_conf = tf.compat.v1.ConfigProto(
         # intra_op_parallelism_threads=1,
         # inter_op_parallelism_threads=1
     )
-    from keras import backend as K
-    tf.set_random_seed(s)
-    sess = tf.Session(graph=tf.get_default_graph(), config=session_conf)
+    from tensorflow.python.keras import backend as K
+    tf.random.set_seed(s)
+    sess = tf.compat.v1.Session(graph=tf.compat.v1.get_default_graph(), config=session_conf)
     K.set_session(sess)
     return sess
 

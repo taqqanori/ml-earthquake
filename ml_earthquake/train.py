@@ -4,11 +4,11 @@ import random as rn
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, roc_auc_score
-from keras.callbacks import Callback
-from keras.models import Model, load_model
-from keras.layers import Input, MultiHeadAttention, Flatten, Dense, Dropout
-from keras.optimizers import Adam
-from keras.callbacks import TensorBoard, ModelCheckpoint
+from keras.api.callbacks import Callback
+from keras.api.models import Model, load_model
+from keras.api.layers import Input, MultiHeadAttention, Flatten, Dense, Dropout
+from keras.api.optimizers import Adam
+from keras.api.callbacks import TensorBoard, ModelCheckpoint
 from datetime import datetime
 from imblearn.over_sampling import SMOTE
 from imblearn.under_sampling import (
@@ -58,6 +58,8 @@ def train(
     x = Dropout(dropout)(x)
     x = Dense(1, activation='relu')(x)
     model = Model(inputs=inputs, outputs=[x])
+    adam = Adam(learning_rate=learning_rate, decay=decay)
+    model.compile(optimizer=adam, loss='binary_crossentropy', metrics=["accuracy"])
     model.summary()
 
     reporter = _Reporter(X_test, y_test)
@@ -216,13 +218,11 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter
 def _resample(X_train, y_train, resampling_method, random_state):
     resampler = _get_resampler(resampling_method, random_state)
     print('performing {}...'.format(resampling_method['name']))
-    X_train_resample, y_train = resampler.fit_sample(X_train.reshape(X_train.shape[0], -1), y_train)
+    X_train_resample, y_train = resampler.fit_resample(X_train.reshape(X_train.shape[0], -1), y_train)
     X_train = X_train_resample.reshape(\
         X_train_resample.shape[0], \
         X_train.shape[1], \
-        X_train.shape[2], \
-        X_train.shape[3], \
-        X_train.shape[4])
+        X_train.shape[2])
     positive = (0.5 <= y_train).sum()
     negative = (y_train < 0.5).sum()
     print('{} performed train data balance P:{} : N:{}'.format(

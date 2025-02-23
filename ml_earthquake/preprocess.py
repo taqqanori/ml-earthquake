@@ -70,7 +70,7 @@ def preprocess(
     eq = None
     date = None
     progress = None
-    for df in pd.read_csv(data_path, parse_dates=['time'], index_col=0, chunksize=chunk_size):
+    for df in pd.read_csv(data_path, parse_dates=['time'], index_col='time', chunksize=chunk_size):
         if df.index[0].tz is None:
             df.index = df.index.tz_localize('UTC')
         df.index = df.index.tz_convert('Asia/Tokyo')
