@@ -50,7 +50,7 @@ def main(
             
             if sess is not None:
                 sess.close()
-                tf.reset_default_graph()
+                tf.compat.v1.reset_default_graph()
             sess = set_random_seed(random_seed)
             print('start preprocess and train for recipe ID: {}'.format(r['id']))
             X_train, y_train, X_test, y_test, info_train, info_test = preprocess(
