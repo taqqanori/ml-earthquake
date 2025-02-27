@@ -148,8 +148,7 @@ def preprocess(
     for i in range(0, X.shape[-1]):
         X[:,:,:,:,i] = np.clip(X[:,:,:,:,i] / maxes[i], 0, 1.0)
     
-    X = X.reshape(X.shape[0], X.shape[1], X.shape[2] * X.shape[3] * X.shape[4])
-    print(X.shape)
+    # X = X.reshape(X.shape[0], X.shape[1], X.shape[2] * X.shape[3] * X.shape[4])
 
     if for_prediction:
         return X
@@ -165,6 +164,7 @@ def preprocess(
     return _train_test_split(X, y, info, window_days, predict_range_days, test_ratio)
 
 def _train_test_split(X, y, info, window_days, predict_range_days, test_ratio):
+    X = np.nan_to_num(X)
     test_count = int(len(X) * test_ratio)
     train_index = np.arange(0, len(X) - (test_count + window_days + predict_range_days))
     test_index = np.arange(len(X) - test_count, len(X))

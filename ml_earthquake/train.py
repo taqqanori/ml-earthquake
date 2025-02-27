@@ -6,7 +6,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import confusion_matrix, roc_auc_score
 from keras.api.callbacks import Callback
 from keras.api.models import Model, load_model
-from keras.api.layers import Input, MultiHeadAttention, Flatten, Dense, Dropout
+from keras.api.layers import Input, MultiHeadAttention, Flatten, Dense, Dropout, BatchNormalization, ConvLSTM2D
 from keras.api.optimizers import Adam
 from keras.api.callbacks import TensorBoard, ModelCheckpoint
 from datetime import datetime
@@ -48,16 +48,38 @@ def train(
 
     inputs = Input(shape=(X_train.shape[1:]))
     x = inputs
-    x = MultiHeadAttention(10, 10)(x, x)
+
+    x = MultiHeadAttention(1, 1)(x, x)
+    
+    x = ConvLSTM2D(
+        input_shape=(X_train.shape[1], X_train.shape[2], X_train.shape[3], X_train.shape[4]),
+        filters=5,
+        kernel_size=(3, 3),
+        padding='same',
+        dropout=dropout,
+        return_sequences=False
+    )(x)
+    x = BatchNormalization()(x)
     x = Flatten()(x)
-    x = Dense(10000, activation='relu')(x)
+
+    # x = Dense(10000, activation='relu')(x)
+    # x = BatchNormalization()(x)
+    # x = Dropout(dropout)(x)
+
+    # x = Dense(1000, activation='relu')(x)
+    # x = BatchNormalization()(x)
+    # x = Dropout(dropout)(x)
+
+    x = Dense(100, activation='relu')(x)
+    x = BatchNormalization()(x)
     x = Dropout(dropout)(x)
-    x = Dense(1000, activation='relu')(x)
-    x = Dropout(dropout)(x)
-    x = Dense(10, activation='relu')(x)
-    x = Dropout(dropout)(x)
-    x = Dense(1, activation='relu')(x)
-    model = Model(inputs=inputs, outputs=[x])
+
+    # x = Dense(10, activation='relu')(x)
+    # x = BatchNormalization()(x)
+
+    outputs = Dense(1, activation='sigmoid')(x)
+
+    model = Model(inputs=inputs, outputs=[outputs])
     adam = Adam(learning_rate=learning_rate, decay=decay)
     model.compile(optimizer=adam, loss='binary_crossentropy', metrics=["accuracy"])
     model.summary()
@@ -101,7 +123,8 @@ def train(
         model.fit(X_train, y_train, \
             epochs=epochs, callbacks=callbacks, \
             validation_data=(X_test, y_test),
-            class_weight=class_weight)
+            class_weight=class_weight,
+            batch_size=5)
     
     if out_dir is not None and info_train is not None and info_test is not None:
         _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter)
@@ -134,7 +157,7 @@ def _output(out_dir, X_test, y_test, info_train, info_test, model_path, reporter
 
     # validations
     validations = []
-    y_pred = best_model.predict(X_test).reshape(-1)
+    y_pred = best_model.predict(X_test, batch_size=5).reshape(-1)
     for i in range(0, len(y_test)):
         predict_center_lat = float(info_test[i]['predict_center_lat'])
         predict_center_lng = float(info_test[i]['predict_center_lng'])
@@ -222,7 +245,9 @@ def _resample(X_train, y_train, resampling_method, random_state):
     X_train = X_train_resample.reshape(\
         X_train_resample.shape[0], \
         X_train.shape[1], \
-        X_train.shape[2])
+        X_train.shape[2],
+        X_train.shape[3],
+        X_train.shape[4])
     positive = (0.5 <= y_train).sum()
     negative = (y_train < 0.5).sum()
     print('{} performed train data balance P:{} : N:{}'.format(
@@ -306,7 +331,7 @@ class _Reporter(Callback):
         ))
 
 def _eval(model, X_test, y_test):
-    y_pred = model.predict(X_test).reshape(-1)
+    y_pred = model.predict(X_test, batch_size=5).reshape(-1)
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred >= 0.5).ravel()
     auc = roc_auc_score(y_test, y_pred)
     f1 = (2 * tp) / (2 * tp + fp + fn)
